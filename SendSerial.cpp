@@ -1,3 +1,11 @@
+/*
+ * @author Ricardo Garcia Rosas
+ *
+ * @section DESCRIPTION
+ *
+ * Serial communication handler for arduino.
+ *
+ */
 #include "SendSerial.h"
 
 //void sendSerial(int angle, char axis)
