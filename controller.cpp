@@ -16,7 +16,9 @@ Controller::Controller()
     errorPast = 0;
     gainP = 0;
     desiredPos = 0;
-    currentPos = 0;
+    posPiexel = 0;
+    posNew = 0;
+    posPast = 0;
     output = 0;
     outputMin = 0;
     outputMax = 0;
@@ -32,7 +34,9 @@ Controller::Controller(int outputMin, int outputMax, double gainP)
     errorPast = 0;
     this->gainP = gainP;
     desiredPos = 0;
-    currentPos = 0;
+    posPiexel = 0;
+    posNew = 0;
+    posPast = 0;
     output = 0;
     this->outputMin = outputMin;
     this->outputMax = outputMax;
@@ -78,7 +82,7 @@ int Controller::PositionControl(int desiredPos, int posPixel)
 //Performs proportional position control.
 //The output is normalized to work within the application's requirements.
 //@return normalized control signal.
-int Controller::PositionControl(int currentPos)
+int Controller::PositionControl(int posPixel)
 {
     transformPos(posPixel);
     ComputeError();
