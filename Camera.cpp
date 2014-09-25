@@ -42,8 +42,7 @@ Mat ImageProcessing(Mat source, int thres, int morphSize)
 //@return image with circles on top.
 Mat GetBallPosition(int* xPosBall, int* yPosBall, int* radius, vector<Vec3f> circles, Mat source)
 {
-    if(circles.size() > 0)
-    {
+    if(circles.size() > 0) {
         *xPosBall = cvRound(circles[0][0]);
         *yPosBall = cvRound(circles[0][1]);
         *radius = cvRound(circles[0][2]);

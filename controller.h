@@ -11,12 +11,12 @@ public:
     Controller(int, int, int);
     void SetOutputMax(int);
     void SetOutputMin(int);
-    void SetGainP(int);
+    void SetGainP(double);
     void SetDesiredPos(int);
     void SetCurrentPos(int);
     int GetOutputMax();
     int GetOutputMin();
-    int GetGainP();
+    double GetGainP();
     int GetCurrentPos();
     int GetDesiredPos();
     int GetErrorNew();
@@ -27,12 +27,12 @@ private:
     int errorPast;
     int desiredPos;
     int currentPos;
-    int output;
+    double output;
     int outputMin;
     int outputMax;
-    int gainP;
+    double gainP;
     void ComputeError();
-    int ProportionalCorrection();
+    double ProportionalCorrection();
     int NormalizeData(int);
 };
 

@@ -49,9 +49,9 @@ void Controller::ComputeError()
 //If the correction is greater or lower than the controller's limits,
 //the value is set to that of the limit.
 //@return controller proportional correction as integer.
-int Controller::ProportionalCorrection()
+double Controller::ProportionalCorrection()
 {
-    int correctionP = gainP * errorNew;
+    double correctionP = gainP * errorNew;
     if(correctionP > UPPERLIMIT)
         correctionP = UPPERLIMIT;
     else if(correctionP < LOWERLIMIT)
@@ -72,7 +72,7 @@ int Controller::PositionControl(int desiredPos, int currentPos)
         output = UPPERLIMIT;
     else if(output < LOWERLIMIT)
         output = LOWERLIMIT;
-    return NormalizeData(output);
+    return NormalizeData((int)output);
 }
 
 //Performs proportional position control.
@@ -87,7 +87,7 @@ int Controller::PositionControl(int currentPos)
         output = UPPERLIMIT;
     else if(output < LOWERLIMIT)
         output = LOWERLIMIT;
-    return NormalizeData(output);
+    return NormalizeData((int)output);
 }
 
 //Normalizes control data to the output range.
@@ -109,7 +109,7 @@ void Controller::SetCurrentPos(int currentPos)
     this->currentPos = currentPos;
 }
 
-void Controller::SetGainP(int gainP)
+void Controller::SetGainP(double gainP)
 {
     this->gainP = gainP;
 }
@@ -125,7 +125,7 @@ void Controller::SetOutputMin(int outputMin)
 }
 
 //Getters
-int Controller::GetGainP()
+double Controller::GetGainP()
 {
     return gainP;
 }

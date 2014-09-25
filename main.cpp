@@ -7,6 +7,8 @@
 #include <stdio.h>
 
 #define INFINITE_LOOP true
+#define BOARD_0_XANG 7
+#define BOARD_0_YANG 7
 
 using namespace cv;
 using namespace std;
@@ -15,10 +17,17 @@ int SerialTest();
 
 int main(int argc, char** argv)
 {
+    SerialTest();
+}
+
+int MainProgram(){
+    bool ballOnBoard = false;
     int thresh = 62;
     int upperThres = 10;
     int centerThres = 10;
-    int xPosBall, yPosBall, radius, xAngle, yAngle;
+    int xPosBall, yPosBall, radius;
+    int xAngle = BOARD_0_XANG;
+    int yAngle = BOARD_0_YANG;
 
     Mat source, processed;
     vector<Vec3f> circles;
@@ -58,9 +67,16 @@ int main(int argc, char** argv)
         //Get circles from processed image.
         HoughCircles(processed, circles, CV_HOUGH_GRADIENT, 1, processed.rows/8, upperThres, centerThres, 15, 25);
 
-        source = GetBallPosition(&xPosBall, &yPosBall, &radius, circles, source);
+        ballOnBoard = circles.size() != 0;
 
-        xAngle = xControl.PositionControl(xPosBall);
+        if(ballOnBoard) {
+            source = GetBallPosition(&xPosBall, &yPosBall, &radius, circles, source);
+            xAngle = xControl.PositionControl(xPosBall);
+        }
+        else {
+            xAngle = BOARD_0_XANG;
+            yAngle = BOARD_0_YANG;
+        }
 
         cout << "x ang: " << xAngle << endl;
         cout << "x pos: " << xPosBall << endl;
@@ -80,13 +96,12 @@ int main(int argc, char** argv)
     }
 }
 
-
 //Test program for serial communication with arduino.
 //Sends trackbar value for x and y angle.
 int SerialTest()
 {
-    int xAngle = 0;
-    int yAngle = 0;
+    int xAngle = 65;
+    int yAngle = 105;
 
     Mat src;
 
@@ -101,8 +116,8 @@ int SerialTest()
     namedWindow("Test", CV_WINDOW_AUTOSIZE);
 
     //Trackbar
-    cvCreateTrackbar("X Angle","Test",&xAngle,15);
-    cvCreateTrackbar("Y Angle","Test",&yAngle,15);
+    cvCreateTrackbar("X Angle","Test",&xAngle,180);
+    cvCreateTrackbar("Y Angle","Test",&yAngle,180);
 
     while(true)
     {
@@ -115,9 +130,9 @@ int SerialTest()
         }
 
         //Send x data
-        SendSerial(xAngle, 'x', PORT_1);
+        SendSerial(xAngle, 'x', PORT_0);
         //Send y data
-        SendSerial(yAngle, 'y', PORT_1);
+        SendSerial(yAngle, 'y', PORT_0);
 
         imshow("Test", src);
 
