@@ -7,17 +7,18 @@
 #include <stdio.h>
 
 #define INFINITE_LOOP true
-#define BOARD_0_XANG 7
-#define BOARD_0_YANG 7
+#define BOARD_0_XANG 8
+#define BOARD_0_YANG 8
 
 using namespace cv;
 using namespace std;
 
 int SerialTest();
+int MainProgram();
 
 int main(int argc, char** argv)
 {
-    SerialTest();
+    MainProgram();
 }
 
 int MainProgram(){
@@ -34,7 +35,7 @@ int MainProgram(){
     //Get video
     VideoCapture cap(2);
 
-    Controller xControl(0,15,1);
+    Controller xControl(0,16,0.3);
     //Controller yControl(0,15,1);
     xControl.SetDesiredPos(150);
     //yControl.SetDesiredPos(300);
@@ -101,7 +102,7 @@ int MainProgram(){
 int SerialTest()
 {
     int xAngle = 65;
-    int yAngle = 105;
+    int yAngle = 98;
 
     Mat src;
 

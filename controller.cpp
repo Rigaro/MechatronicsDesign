@@ -26,7 +26,7 @@ Controller::Controller()
 //@param controller output lower limit.
 //@param controller output upper limit.
 //@param controller proportional gain.
-Controller::Controller(int outputMin, int outputMax, int gainP)
+Controller::Controller(int outputMin, int outputMax, double gainP)
 {
     errorNew = 0;
     errorPast = 0;

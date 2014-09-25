@@ -8,7 +8,7 @@ class Controller
 {
 public:
     Controller();
-    Controller(int, int, int);
+    Controller(int, int, double);
     void SetOutputMax(int);
     void SetOutputMin(int);
     void SetGainP(double);
