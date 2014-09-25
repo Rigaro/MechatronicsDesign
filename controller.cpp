@@ -42,7 +42,7 @@ Controller::Controller(int outputMin, int outputMax, double gainP)
 void Controller::ComputeError()
 {
     errorPast = errorNew;
-    errorNew = desiredPos - currentPos;
+    errorNew = desiredPos - posNew;
 }
 
 //Performs the proportional correction for the current position.
@@ -62,17 +62,17 @@ double Controller::ProportionalCorrection()
 //Performs proportional position control that sets the desired position.
 //The output is normalized to work within the application's requirements.
 //@return normalized control signal.
-int Controller::PositionControl(int desiredPos, int currentPos)
+int Controller::PositionControl(int desiredPos, int posPixel)
 {
-    SetCurrentPos(currentPos);
+    SetPosPixel(posPixel);
     SetDesiredPos(desiredPos);
     ComputeError();
-    output += ProportionalCorrection();
-    if(output > UPPERLIMIT)
-        output = UPPERLIMIT;
-    else if(output < LOWERLIMIT)
-        output = LOWERLIMIT;
-    return NormalizeData((int)output);
+    output = ProportionalCorrection();
+    if(output > outputMax)
+        output = outputMax;
+    else if(output < outputMin)
+        output = outputMin;
+    return output;
 }
 
 //Performs proportional position control.
@@ -80,14 +80,20 @@ int Controller::PositionControl(int desiredPos, int currentPos)
 //@return normalized control signal.
 int Controller::PositionControl(int currentPos)
 {
-    SetCurrentPos(currentPos);
+    transformPos(posPixel);
     ComputeError();
-    output += ProportionalCorrection();
+    output = ProportionalCorrection();
     if(output > UPPERLIMIT)
         output = UPPERLIMIT;
     else if(output < LOWERLIMIT)
         output = LOWERLIMIT;
-    return NormalizeData((int)output);
+    return output;
+}
+
+void transformPos(int posPixel)
+{
+    setPosPast(posNew);
+    setPosNew(posPixel*TSCALAR+TCONST);
 }
 
 //Normalizes control data to the output range.
@@ -104,9 +110,19 @@ void Controller::SetDesiredPos(int desiredPos)
     this->desiredPos = desiredPos;
 }
 
-void Controller::SetCurrentPos(int currentPos)
+void Controller::SetPosNew(int posNew)
 {
-    this->currentPos = currentPos;
+    this->posNew = posNew;
+}
+
+void Controller::SetPosPast(int posPast)
+{
+    this->posPast = posPast;
+}
+
+void Controller::SetPosPixel(int posPixel)
+{
+    this->posPixel = posPixel;
 }
 
 void Controller::SetGainP(double gainP)
