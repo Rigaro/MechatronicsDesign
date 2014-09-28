@@ -38,6 +38,13 @@ Controller::Controller(int outputMin, int outputMax, double gainP)
     this->outputMax = outputMax;
 }
 
+void Controller::Reset()
+{
+    errorNew = 0;
+    errorPast = 0;
+    output = 0;
+}
+
 //Computes the error between the desired and current position.
 void Controller::ComputeError()
 {

@@ -23,9 +23,9 @@ int main(int argc, char** argv)
 
 int MainProgram(){
     bool ballOnBoard = false;
-    int thresh = 62;
-    int upperThres = 10;
-    int centerThres = 10;
+    int thresh = 105;
+    int upperThres = 8;
+    int centerThres = 8;
     int xPosBall, yPosBall, radius;
     int xAngle = BOARD_0_XANG;
     int yAngle = BOARD_0_YANG;
@@ -35,10 +35,10 @@ int MainProgram(){
     //Get video
     VideoCapture cap(2);
 
-    Controller xControl(0,16,0.3);
-    //Controller yControl(0,15,1);
+    Controller xControl(0,16,0.1);
+    Controller yControl(0,16,0.1);
     xControl.SetDesiredPos(150);
-    //yControl.SetDesiredPos(300);
+    yControl.SetDesiredPos(300);
 
     namedWindow("Original", CV_WINDOW_AUTOSIZE);
 
@@ -73,19 +73,21 @@ int MainProgram(){
         if(ballOnBoard) {
             source = GetBallPosition(&xPosBall, &yPosBall, &radius, circles, source);
             xAngle = xControl.PositionControl(xPosBall);
+            yAngle = yControl.PositionControl(yPosBall);
         }
-        else {
-            xAngle = BOARD_0_XANG;
-            yAngle = BOARD_0_YANG;
-        }
+
+
+        //Send x data
+        SendSerial(xAngle, 'x', PORT_0);
+        //Send y data
+        SendSerial(yAngle, 'y', PORT_0);
 
         cout << "x ang: " << xAngle << endl;
         cout << "x pos: " << xPosBall << endl;
-        cout << "des pos: " << xControl.GetDesiredPos() << endl;
-        cout << "cur pos: " << xControl.GetCurrentPos() << endl;
-        cout << "error: " << xControl.GetErrorNew() << endl;
-        //cout << "y: " << yPosBall << endl;
-        //cout << "r: " << radius << endl;
+        cout << "x error: " << xControl.GetErrorNew() << endl;
+        cout << "y ang: " << yAngle << endl;
+        cout << "y pos: " << yPosBall << endl;
+        cout << "y error: " << yControl.GetErrorNew() << endl;
         imshow("Original", source);
         imshow("Thresh", processed);
 

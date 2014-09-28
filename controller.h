@@ -14,6 +14,7 @@ public:
     void SetGainP(double);
     void SetDesiredPos(int);
     void SetCurrentPos(int);
+    void Reset();
     int GetOutputMax();
     int GetOutputMin();
     double GetGainP();
