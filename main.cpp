@@ -1,6 +1,7 @@
 #include "SendSerial.h"
 #include "Camera.h"
 #include "controller.h"
+#include "controllerpid.h"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include <iostream>
@@ -35,10 +36,10 @@ int MainProgram(){
     //Get video
     VideoCapture cap(2);
 
-    Controller xControl(0,16,0.1);
-    Controller yControl(0,16,0.1);
-    xControl.SetDesiredPos(150);
-    yControl.SetDesiredPos(300);
+    ControllerPID xControl(0,16,0.1,0.1,0.01,100);
+    ControllerPID yControl(0,16,0.1,0.1,0.01,100);
+    xControl.SetDesiredPos_px(150);
+    yControl.SetDesiredPos_px(300);
 
     namedWindow("Original", CV_WINDOW_AUTOSIZE);
 
@@ -84,10 +85,10 @@ int MainProgram(){
 
         cout << "x ang: " << xAngle << endl;
         cout << "x pos: " << xPosBall << endl;
-        cout << "x error: " << xControl.GetErrorNew() << endl;
+        cout << "x error: " << xControl.GetCurrentError() << endl;
         cout << "y ang: " << yAngle << endl;
         cout << "y pos: " << yPosBall << endl;
-        cout << "y error: " << yControl.GetErrorNew() << endl;
+        cout << "y error: " << yControl.GetCurrentError() << endl;
         imshow("Original", source);
         imshow("Thresh", processed);
 

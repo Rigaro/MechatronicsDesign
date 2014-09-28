@@ -7,7 +7,8 @@ SOURCES += main.cpp \
     SendSerial.cpp \
     Camera.cpp \
     controller.cpp \
-    fscontroller.cpp
+    fscontroller.cpp \
+    controllerpid.cpp
 
 unix: CONFIG += link_pkgconfig
 unix: PKGCONFIG += opencv
@@ -16,4 +17,5 @@ HEADERS += \
     SendSerial.h \
     Camera.h \
     controller.h \
-    fscontroller.h
+    fscontroller.h \
+    controllerpid.h
