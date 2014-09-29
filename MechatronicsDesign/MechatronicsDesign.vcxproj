@@ -67,6 +67,7 @@
   <ItemGroup>
     <ClCompile Include="..\Camera.cpp" />
     <ClCompile Include="..\controller.cpp" />
+    <ClCompile Include="..\controllerpid.cpp" />
     <ClCompile Include="..\fscontroller.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\SendSerial.cpp" />
@@ -74,6 +75,7 @@
   <ItemGroup>
     <ClInclude Include="..\Camera.h" />
     <ClInclude Include="..\controller.h" />
+    <ClInclude Include="..\controllerpid.h" />
     <ClInclude Include="..\fscontroller.h" />
     <ClInclude Include="..\SendSerial.h" />
   </ItemGroup>
