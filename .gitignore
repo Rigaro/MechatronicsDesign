@@ -1,3 +1,5 @@
-MechatronicsDesign/include/*
+MechatronicsDesign/include
 MechatronicsDesign/MechatronicsDesign.opensdf
 MechatronicsDesign/opencv_lib
+MechatronicsDesign/Debug
+MechatronicsDesign/Release
