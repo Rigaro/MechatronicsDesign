@@ -25,7 +25,7 @@ ControllerPID::ControllerPID(int outputMin_deg, int outputMax_deg,
 void ControllerPID::ComputeError()
 {
     previousError = error;
-    error = this->desPos_px - this->curPos_px;
+    error = desPos_px - curPos_px;
 }
 
 /**
