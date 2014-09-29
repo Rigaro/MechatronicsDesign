@@ -82,7 +82,9 @@ int ControllerPID::PositionControl(int curPos_px, double frameDelta)
     SetCurrentPos_px(curPos_px);
     ComputeError();
 
-    controlSignal = ProportionalCorrection() + IntegralCorrection() + DerivativeCorrection();
+    double controlSignal = ProportionalCorrection() + \
+        IntegralCorrection(frameDelta) + DerivativeCorrection(frameDelta);
+
     controlSignal = ClampSaturation(controlSignal);
 
     return NormalizeData(controlSignal);

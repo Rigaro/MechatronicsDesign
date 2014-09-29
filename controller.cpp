@@ -18,9 +18,8 @@ Controller::Controller()
     curPos_px = 0;
     curPos_mm = 0.0;
     gainP = 0.0;
-    outputMin_deg = 0.0;
-    outputMax_deg = 0.0;
-    controlSignal = 0.0;
+    outputMin_deg = 0;
+    outputMax_deg = 0;
 }
 
 //Initializes controller limits and gain.
@@ -37,7 +36,6 @@ Controller::Controller(int outputMin_deg, int outputMax_deg, double gainP)
     this->gainP = gainP;
     this->outputMin_deg = outputMin_deg;
     this->outputMax_deg = outputMax_deg;
-    controlSignal = 0;
 }
 
 //Computes the error between the desired and current position.
@@ -73,7 +71,7 @@ int Controller::PositionControl(int curPos_px)
 {
     SetCurrentPos_px(curPos_px);
     ComputeError();
-    controlSignal = ProportionalCorrection();
+    double controlSignal = ProportionalCorrection();
     
     controlSignal = ClampSaturation(controlSignal);
 
@@ -91,10 +89,10 @@ void transformPos(int posPixel)
 //Normalizes control data to the output range.
 //@param data to be normalized.
 //@return normalized control data.
-int Controller::NormalizeData(int data)
+int Controller::NormalizeData(double data)
 {
-    return (data - LOWERLIMIT) * \
-        (outputMax_deg - outputMin_deg)/(UPPERLIMIT - LOWERLIMIT);
+    return (int)((data - LOWERLIMIT) * \
+        (outputMax_deg - outputMin_deg)/(UPPERLIMIT - LOWERLIMIT));
 }
 
 /**
@@ -104,7 +102,7 @@ that is out-of-bounds.
 @param output Signal to clamp
 @return Clamped signal if out-of-bounds, or given signal
 */
-int Controller::ClampSaturation(int output)
+double Controller::ClampSaturation(double output)
 {
     if (output > UPPERLIMIT)
         output = UPPERLIMIT;

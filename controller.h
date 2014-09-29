@@ -28,8 +28,7 @@ class Controller
         int GetCurrentError();
     protected:
         int error;
-        double controlSignal;
-    
+   
         int desPos_px;
         double desPos_mm;
         int curPos_px;
@@ -37,8 +36,8 @@ class Controller
 
         void ComputeError();
         double ProportionalCorrection();
-        int NormalizeData(int);
-        int ClampSaturation(int);
+        int NormalizeData(double);
+        double ClampSaturation(double);
     private:
         double gainP;
         int outputMin_deg;
