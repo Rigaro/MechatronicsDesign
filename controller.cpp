@@ -9,44 +9,44 @@
  */
 #include "controller.h"
 
-//Default contructor
+//Default constructor
 Controller::Controller()
 {
-    errorNew = 0;
-    errorPast = 0;
-    gainP = 0;
-    desiredPos = 0;
-    posPiexel = 0;
-    posNew = 0;
-    posPast = 0;
-    output = 0;
-    outputMin = 0;
-    outputMax = 0;
+    error_k0 = 0;
+    error_k1 = 0;
+    desPos_px = 0;
+    desPos_mm = 0.0;
+    curPos_px = 0;
+    curPos_mm = 0.0;
+    gainP = 0.0;
+    outputMin_deg = 0.0;
+    outputMax_deg = 0.0;
+    controlSignal = 0.0;
 }
 
 //Initializes controller limits and gain.
 //@param controller output lower limit.
 //@param controller output upper limit.
 //@param controller proportional gain.
-Controller::Controller(int outputMin, int outputMax, double gainP)
+Controller::Controller(int outputMin_deg, int outputMax_deg, double gainP)
 {
-    errorNew = 0;
-    errorPast = 0;
+    error_k0 = 0;
+    error_k1 = 0;
+    desPos_px = 0;
+    desPos_mm = 0.0;
+    curPos_px = 0;
+    curPos_mm = 0.0;
     this->gainP = gainP;
-    desiredPos = 0;
-    posPiexel = 0;
-    posNew = 0;
-    posPast = 0;
-    output = 0;
-    this->outputMin = outputMin;
-    this->outputMax = outputMax;
+    this->outputMin_deg = outputMin_deg;
+    this->outputMax_deg = outputMax_deg;
+    controlSignal = 0;
 }
 
 //Computes the error between the desired and current position.
 void Controller::ComputeError()
 {
-    errorPast = errorNew;
-    errorNew = desiredPos - posNew;
+    error_k1 = error_k0;
+    error_k0 = desPos_px - curPos_px;
 }
 
 //Performs the proportional correction for the current position.
@@ -55,7 +55,7 @@ void Controller::ComputeError()
 //@return controller proportional correction as integer.
 double Controller::ProportionalCorrection()
 {
-    double correctionP = gainP * errorNew;
+    double correctionP = gainP * error_k0;
     if(correctionP > UPPERLIMIT)
         correctionP = UPPERLIMIT;
     else if(correctionP < LOWERLIMIT)
@@ -66,67 +66,70 @@ double Controller::ProportionalCorrection()
 //Performs proportional position control that sets the desired position.
 //The output is normalized to work within the application's requirements.
 //@return normalized control signal.
-int Controller::PositionControl(int desiredPos, int posPixel)
+int Controller::PositionControl(int desPos_px, int curPos_px)
 {
-    SetPosPixel(posPixel);
-    SetDesiredPos(desiredPos);
+    SetCurrentPos_px(curPos_px);
+    SetDesiredPos_px(desPos_px);
     ComputeError();
-    output = ProportionalCorrection();
-    if(output > outputMax)
-        output = outputMax;
-    else if(output < outputMin)
-        output = outputMin;
-    return output;
+    controlSignal = ProportionalCorrection();
+    if(controlSignal > UPPERLIMIT)
+        controlSignal = UPPERLIMIT;
+    else if(controlSignal < LOWERLIMIT)
+        controlSignal = LOWERLIMIT;
+    return NormalizeData(controlSignal);
 }
 
 //Performs proportional position control.
 //The output is normalized to work within the application's requirements.
 //@return normalized control signal.
-int Controller::PositionControl(int posPixel)
+int Controller::PositionControl(int curPos_px)
 {
-    transformPos(posPixel);
+    SetCurrentPos_px(curPos_px);
     ComputeError();
-    output = ProportionalCorrection();
-    if(output > UPPERLIMIT)
-        output = UPPERLIMIT;
-    else if(output < LOWERLIMIT)
-        output = LOWERLIMIT;
-    return output;
+    controlSignal = ProportionalCorrection();
+    if(controlSignal > UPPERLIMIT)
+        controlSignal = UPPERLIMIT;
+    else if(controlSignal < LOWERLIMIT)
+        controlSignal = LOWERLIMIT;
+    return NormalizeData(controlSignal);
 }
 
+/*
 void transformPos(int posPixel)
 {
-    setPosPast(posNew);
-    setPosNew(posPixel*TSCALAR+TCONST);
+    SetPosPast(posNew);
+    SetPosNew(posPixel*TSCALAR+TCONST);
 }
+*/
 
 //Normalizes control data to the output range.
 //@param data to be normalized.
 //@return normalized control data.
 int Controller::NormalizeData(int data)
 {
-    return (data - LOWERLIMIT)*(outputMax - outputMin)/(UPPERLIMIT - LOWERLIMIT);
+    return (data - LOWERLIMIT)*(outputMax_deg - outputMin_deg)/(UPPERLIMIT - LOWERLIMIT);
 }
 
 //Setters
-void Controller::SetDesiredPos(int desiredPos)
+void Controller::SetDesiredPos_px(int desPos_px)
 {
-    this->desiredPos = desiredPos;
+    this->desPos_px = desPos_px;
 }
 
-void Controller::SetPosNew(int posNew)
+void Controller::SetDesiredPos_mm(double desPos_mm)
 {
-    this->posNew = posNew;
+    this->desPos_mm = desPos_mm;
 }
 
-void Controller::SetPosPast(int posPast)
+
+void Controller::SetCurrentPos_px(int curPos_px)
 {
-    this->posPast = posPast;
+    this->curPos_px = curPos_px;
 }
 
-void Controller::SetPosPixel(int posPixel)
+void Controller::SetCurrentPos_mm(double desPos_mm)
 {
-    this->posPixel = posPixel;
+    this->desPos_mm = desPos_mm;
 }
 
 void Controller::SetGainP(double gainP)
@@ -134,14 +137,14 @@ void Controller::SetGainP(double gainP)
     this->gainP = gainP;
 }
 
-void Controller::SetOutputMax(int outputMax)
+void Controller::SetOutputMax(int outputMax_deg)
 {
-    this->outputMax = outputMax;
+    this->outputMax_deg = outputMax_deg;
 }
 
-void Controller::SetOutputMin(int outputMin)
+void Controller::SetOutputMin(int outputMin_deg)
 {
-    this->outputMin = outputMin;
+    this->outputMin_deg = outputMin_deg;
 }
 
 //Getters
@@ -152,25 +155,35 @@ double Controller::GetGainP()
 
 int Controller::GetOutputMax()
 {
-    return outputMax;
+    return outputMax_deg;
 }
 
 int Controller::GetOutputMin()
 {
-    return outputMin;
+    return outputMin_deg;
 }
 
-int Controller::GetDesiredPos()
+int Controller::GetDesiredPos_px()
 {
-    return desiredPos;
+    return desPos_px;
 }
 
-int Controller::GetCurrentPos()
+double Controller::GetDesiredPos_mm()
 {
-    return currentPos;
+    return desPos_mm;
 }
 
-int Controller::GetErrorNew()
+int Controller::GetCurrentPos_px()
 {
-    return errorNew;
+    return curPos_px;
+}
+
+double Controller::GetCurrentPos_mm()
+{
+    return curPos_mm;
+}
+
+int Controller::GetCurrentError()
+{
+    return error_k0;
 }
