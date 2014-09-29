@@ -16,9 +16,13 @@
 //@return processed image.
 Mat ImageProcessing(Mat source, int thres, int morphSize)
 {
+    //TODO: Go over http://stackoverflow.com/questions/9860667/writing-robust-color-and-size-invariant-circle-detection-with-opencv-based-on
     Mat grayScale, thresholded;
     //Convert frame to Gray
     cvtColor(source, grayScale, CV_BGR2GRAY);
+
+    // Blur out noise
+    //GaussianBlur(grayScale, grayScale, Size(9, 9), 2, 2);
 
     //Threshold
     threshold(grayScale, thresholded, thres, 255, THRESH_BINARY);
