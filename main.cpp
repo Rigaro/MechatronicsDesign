@@ -8,6 +8,10 @@
 #include <iostream>
 #include <stdio.h>
 
+#if defined(WIN32) || defined(WIN64)
+#include <Windows.h>
+#endif
+
 #define INFINITE_LOOP true
 #define BOARD_0_XANG 8
 #define BOARD_0_YANG 8
@@ -53,8 +57,8 @@ int MainProgram()
     int upperThres = 8;
     int centerThres = 8;
     int xPosBall = 0, yPosBall = 0, radius = 0;
-    int xAngle = BOARD_0_XANG;
-    int yAngle = BOARD_0_YANG;
+    int xAngle = BOARD_0_XANG, prevXAngle = xAngle;
+    int yAngle = BOARD_0_YANG, prevYAngle = yAngle;
 
     /* 
     To determine our sample frequency, we must determine the frame rate of the
@@ -138,24 +142,30 @@ int MainProgram()
             frame. We need to pass in the current ball position and the
             frameDelta (i.e. dt) for our calculations.
             */
+            prevXAngle = xAngle;
+            prevYAngle = yAngle;
+
             xAngle = xControl.PositionControl(xPosBall, frameDelta);
             yAngle = yControl.PositionControl(yPosBall, frameDelta);
         }
+
+        
 
         //Send x data
         SendSerial(xAngle, 'x', PORT_0);
         //Send y data
         SendSerial(yAngle, 'y', PORT_0);
 
-        /*cout << "x ang: " << xAngle << endl;
-        cout << "x pos: " << xPosBall << endl;
-        cout << "x error: " << xControl.GetCurrentError() << endl;
-        cout << "y ang: " << yAngle << endl;
-        cout << "y pos: " << yPosBall << endl;
-        cout << "y error: " << yControl.GetCurrentError() << endl;*/
+        printf("C X ang: %d, D X ang: %d, x pos: %d, x error: %d\n", xAngle,
+            prevXAngle, xPosBall, xControl.GetCurrentError());
+
+        printf("C Y ang: %d, D Y ang: %d, y pos: %d, y error: %d\n", yAngle,
+            prevYAngle, yPosBall, yControl.GetCurrentError());
 
         imshow("Original", source);
         imshow("Thresh", processed);
+        
+        //Sleep(100);
 
         //Stop process when esc is pressed.
         if(waitKey(30) == 27)
