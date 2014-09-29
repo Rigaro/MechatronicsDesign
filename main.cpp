@@ -4,6 +4,7 @@
 #include "controllerpid.h"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
+#include "opencv/cv.h"
 #include <iostream>
 #include <stdio.h>
 
@@ -11,30 +12,66 @@
 #define BOARD_0_XANG 8
 #define BOARD_0_YANG 8
 
+#define CAM_INDEX 0
+
+#define FPS_MAX 24
+
 using namespace cv;
 using namespace std;
 
 int SerialTest();
 int MainProgram();
+double getAverageFPS();
 
 int main(int argc, char** argv)
 {
-    MainProgram();
+	MainProgram();
+
+	system("pause");
 }
 
-int MainProgram(){
+double getAverageFPS()
+{
+	static double startTime = getTickCount();
+	static long frameCount = 0;
+
+	double currTime = getTickCount();
+	frameCount++;
+
+	double avgFps = frameCount / ((currTime - startTime) / getTickFrequency());
+
+	if (avgFps > FPS_MAX)
+		avgFps = FPS_MAX;
+
+	return avgFps;
+}
+
+int MainProgram()
+{
     bool ballOnBoard = false;
     int thresh = 105;
     int upperThres = 8;
     int centerThres = 8;
-    int xPosBall, yPosBall, radius;
+    int xPosBall = 0, yPosBall = 0, radius = 0;
     int xAngle = BOARD_0_XANG;
     int yAngle = BOARD_0_YANG;
+
+	/* 
+	To determine our sample frequency, we must determine the frame rate of the
+	camera, as this is the frequency at which we receive updates.
+	i.e. VideoCapture.read is a blocking method, so we will only process when
+	we have a frame available. Therefore, the frame rate dictates our sample
+	frequency.
+
+	In ideal conditions, our FPS sits on 24.
+	*/
+	double currTime = 0, frameTime = 0, beforeCapTime = 0;
+	double averageFPS = 0;
 
     Mat source, processed;
     vector<Vec3f> circles;
     //Get video
-    VideoCapture cap(2);
+    VideoCapture cap(CAM_INDEX);
 
     ControllerPID xControl(0,16,0.1,0.1,0.01,100);
     ControllerPID yControl(0,16,0.1,0.1,0.01,100);
@@ -51,14 +88,28 @@ int MainProgram(){
     if(!cap.isOpened())
     {
         cout << "can not open video" << endl;
+
         return -1;
     }
 
-    while(INFINITE_LOOP)
+	averageFPS = getAverageFPS();
+
+    while (INFINITE_LOOP)
     {
+		beforeCapTime = (double)getTickCount();
+
         bool bSuccess = cap.read(source);
 
-        if(!bSuccess)
+		currTime = (double)getTickCount();
+
+		// Get frame time and total running time
+		frameTime = (currTime - beforeCapTime) / getTickFrequency();
+		averageFPS = getAverageFPS();
+
+		printf("Frame time: %0.4f, FPS: %0.3f, Average FPS: %0.4f\n", 
+			frameTime, 1/frameTime, averageFPS);
+
+        if (!bSuccess)
         {
             cout << "Can't read frame from video" << endl;
             break;
@@ -71,7 +122,8 @@ int MainProgram(){
 
         ballOnBoard = circles.size() != 0;
 
-        if(ballOnBoard) {
+        if(ballOnBoard) 
+		{
             source = GetBallPosition(&xPosBall, &yPosBall, &radius, circles, source);
             xAngle = xControl.PositionControl(xPosBall);
             yAngle = yControl.PositionControl(yPosBall);
@@ -83,12 +135,13 @@ int MainProgram(){
         //Send y data
         SendSerial(yAngle, 'y', PORT_0);
 
-        cout << "x ang: " << xAngle << endl;
+        /*cout << "x ang: " << xAngle << endl;
         cout << "x pos: " << xPosBall << endl;
         cout << "x error: " << xControl.GetCurrentError() << endl;
         cout << "y ang: " << yAngle << endl;
         cout << "y pos: " << yPosBall << endl;
-        cout << "y error: " << yControl.GetCurrentError() << endl;
+        cout << "y error: " << yControl.GetCurrentError() << endl;*/
+
         imshow("Original", source);
         imshow("Thresh", processed);
 
@@ -98,6 +151,8 @@ int MainProgram(){
             break;
         }
     }
+
+	return 0;
 }
 
 //Test program for serial communication with arduino.
