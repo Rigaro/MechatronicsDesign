@@ -25,25 +25,25 @@ double getAverageFPS();
 
 int main(int argc, char** argv)
 {
-	MainProgram();
+    MainProgram();
 
-	system("pause");
+    system("pause");
 }
 
 double getAverageFPS()
 {
-	static double startTime = getTickCount();
-	static long frameCount = 0;
+    static double startTime = (double)getTickCount();
+    static long frameCount = 0;
 
-	double currTime = getTickCount();
-	frameCount++;
+    double currTime = (double)getTickCount();
+    frameCount++;
 
-	double avgFps = frameCount / ((currTime - startTime) / getTickFrequency());
+    double avgFps = frameCount / ((currTime - startTime) / getTickFrequency());
 
-	if (avgFps > FPS_MAX)
-		avgFps = FPS_MAX;
+    if (avgFps > FPS_MAX)
+        avgFps = FPS_MAX;
 
-	return avgFps;
+    return avgFps;
 }
 
 int MainProgram()
@@ -56,25 +56,26 @@ int MainProgram()
     int xAngle = BOARD_0_XANG;
     int yAngle = BOARD_0_YANG;
 
-	/* 
-	To determine our sample frequency, we must determine the frame rate of the
-	camera, as this is the frequency at which we receive updates.
-	i.e. VideoCapture.read is a blocking method, so we will only process when
-	we have a frame available. Therefore, the frame rate dictates our sample
-	frequency.
+    /* 
+    To determine our sample frequency, we must determine the frame rate of the
+    camera, as this is the frequency at which we receive updates.
+    i.e. VideoCapture.read is a blocking method, so we will only process when
+    we have a frame available. Therefore, the frame rate dictates our sample
+    frequency.
 
-	In ideal conditions, our FPS sits on 24.
-	*/
-	double currTime = 0, frameTime = 0, beforeCapTime = 0;
-	double averageFPS = 0;
+    In ideal conditions, our FPS sits on 24.
+    */
+    double currTime = 0, beforeCapTime = 0, prevTime = 0;
+    double frameTime = 0, frameDelta = 0;
+    double averageFPS = 0;
 
     Mat source, processed;
     vector<Vec3f> circles;
     //Get video
     VideoCapture cap(CAM_INDEX);
 
-    ControllerPID xControl(0,16,0.1,0.1,0.01,100);
-    ControllerPID yControl(0,16,0.1,0.1,0.01,100);
+    ControllerPID xControl(0, 16, 0.1, 0.1, 0.01);
+    ControllerPID yControl(0, 16, 0.1, 0.1, 0.01);
     xControl.SetDesiredPos_px(150);
     yControl.SetDesiredPos_px(300);
 
@@ -92,22 +93,25 @@ int MainProgram()
         return -1;
     }
 
-	averageFPS = getAverageFPS();
+    averageFPS = getAverageFPS();
 
     while (INFINITE_LOOP)
     {
-		beforeCapTime = (double)getTickCount();
+        beforeCapTime = (double)getTickCount();
 
         bool bSuccess = cap.read(source);
 
-		currTime = (double)getTickCount();
+        currTime = (double)getTickCount();
 
-		// Get frame time and total running time
-		frameTime = (currTime - beforeCapTime) / getTickFrequency();
-		averageFPS = getAverageFPS();
+        // Get frame time and average FPS
+        frameTime = (currTime - beforeCapTime) / getTickFrequency();
+        averageFPS = getAverageFPS();
+        frameDelta = (currTime - prevTime) / getTickFrequency();
 
-		printf("Frame time: %0.4f, FPS: %0.3f, Average FPS: %0.4f\n", 
-			frameTime, 1/frameTime, averageFPS);
+        printf("Frame time: %0.4f, FPS: %0.3f, Average FPS: %0.4f, Frame delta: %0.2f\n", 
+            frameTime, 1/frameTime, averageFPS, frameDelta);
+
+        prevTime = currTime;
 
         if (!bSuccess)
         {
@@ -118,17 +122,25 @@ int MainProgram()
         processed = ImageProcessing(source, thresh, 9);
 
         //Get circles from processed image.
-        HoughCircles(processed, circles, CV_HOUGH_GRADIENT, 1, processed.rows/8, upperThres, centerThres, 15, 25);
+        HoughCircles(processed, circles, CV_HOUGH_GRADIENT, 1, processed.rows/8, 
+                     upperThres, centerThres, 15, 25);
 
         ballOnBoard = circles.size() != 0;
 
         if(ballOnBoard) 
-		{
-            source = GetBallPosition(&xPosBall, &yPosBall, &radius, circles, source);
-            xAngle = xControl.PositionControl(xPosBall);
-            yAngle = yControl.PositionControl(yPosBall);
-        }
+        {
+            source = GetBallPosition(&xPosBall, &yPosBall, &radius, circles, 
+                                     source);
 
+            /* 
+            We now have the position of the ball based on the pixels in the
+            source stream. The origin (0,0) coordinate is the top left of the
+            frame. We need to pass in the current ball position and the
+            frameDelta (i.e. dt) for our calculations.
+            */
+            xAngle = xControl.PositionControl(xPosBall, frameDelta);
+            yAngle = yControl.PositionControl(yPosBall, frameDelta);
+        }
 
         //Send x data
         SendSerial(xAngle, 'x', PORT_0);
@@ -152,7 +164,7 @@ int MainProgram()
         }
     }
 
-	return 0;
+    return 0;
 }
 
 //Test program for serial communication with arduino.
