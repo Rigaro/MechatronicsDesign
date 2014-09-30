@@ -12,16 +12,14 @@
 //Default constructor
 Controller::Controller()
 {
-    error_k0 = 0;
-    error_k1 = 0;
+    error = 0;
     desPos_px = 0;
     desPos_mm = 0.0;
     curPos_px = 0;
     curPos_mm = 0.0;
     gainP = 0.0;
-    outputMin_deg = 0.0;
-    outputMax_deg = 0.0;
-    controlSignal = 0.0;
+    outputMin_deg = 0;
+    outputMax_deg = 0;
 }
 
 //Initializes controller limits and gain.
@@ -30,8 +28,7 @@ Controller::Controller()
 //@param controller proportional gain.
 Controller::Controller(int outputMin_deg, int outputMax_deg, double gainP)
 {
-    error_k0 = 0;
-    error_k1 = 0;
+    error = 0;
     desPos_px = 0;
     desPos_mm = 0.0;
     curPos_px = 0;
@@ -39,14 +36,12 @@ Controller::Controller(int outputMin_deg, int outputMax_deg, double gainP)
     this->gainP = gainP;
     this->outputMin_deg = outputMin_deg;
     this->outputMax_deg = outputMax_deg;
-    controlSignal = 0;
 }
 
 //Computes the error between the desired and current position.
 void Controller::ComputeError()
 {
-    error_k1 = error_k0;
-    error_k0 = desPos_px - curPos_px;
+    error = desPos_px - curPos_px;
 }
 
 //Performs the proportional correction for the current position.
@@ -55,11 +50,7 @@ void Controller::ComputeError()
 //@return controller proportional correction as integer.
 double Controller::ProportionalCorrection()
 {
-    double correctionP = gainP * error_k0;
-    if(correctionP > UPPERLIMIT)
-        correctionP = UPPERLIMIT;
-    else if(correctionP < LOWERLIMIT)
-        correctionP = LOWERLIMIT;
+    double correctionP = gainP * error;
     return correctionP;
 }
 
@@ -68,15 +59,9 @@ double Controller::ProportionalCorrection()
 //@return normalized control signal.
 int Controller::PositionControl(int desPos_px, int curPos_px)
 {
-    SetCurrentPos_px(curPos_px);
     SetDesiredPos_px(desPos_px);
-    ComputeError();
-    controlSignal = ProportionalCorrection();
-    if(controlSignal > UPPERLIMIT)
-        controlSignal = UPPERLIMIT;
-    else if(controlSignal < LOWERLIMIT)
-        controlSignal = LOWERLIMIT;
-    return NormalizeData(controlSignal);
+    
+    return PositionControl(curPos_px);
 }
 
 //Performs proportional position control.
@@ -86,11 +71,10 @@ int Controller::PositionControl(int curPos_px)
 {
     SetCurrentPos_px(curPos_px);
     ComputeError();
-    controlSignal = ProportionalCorrection();
-    if(controlSignal > UPPERLIMIT)
-        controlSignal = UPPERLIMIT;
-    else if(controlSignal < LOWERLIMIT)
-        controlSignal = LOWERLIMIT;
+    double controlSignal = ProportionalCorrection();
+    
+    controlSignal = ClampSaturation(controlSignal);
+
     return NormalizeData(controlSignal);
 }
 
@@ -105,9 +89,27 @@ void transformPos(int posPixel)
 //Normalizes control data to the output range.
 //@param data to be normalized.
 //@return normalized control data.
-int Controller::NormalizeData(int data)
+int Controller::NormalizeData(double data)
 {
-    return (data - LOWERLIMIT)*(outputMax_deg - outputMin_deg)/(UPPERLIMIT - LOWERLIMIT);
+    return (int)((data - LOWERLIMIT) * \
+        (outputMax_deg - outputMin_deg)/(UPPERLIMIT - LOWERLIMIT));
+}
+
+/**
+Clamps our control signal within saturation limits, so we don't send a signal
+that is out-of-bounds.
+
+@param output Signal to clamp
+@return Clamped signal if out-of-bounds, or given signal
+*/
+double Controller::ClampSaturation(double output)
+{
+    if (output > UPPERLIMIT)
+        output = UPPERLIMIT;
+    else if (output < LOWERLIMIT)
+        output = LOWERLIMIT;
+
+    return output;
 }
 
 //Setters
@@ -185,5 +187,5 @@ double Controller::GetCurrentPos_mm()
 
 int Controller::GetCurrentError()
 {
-    return error_k0;
+    return error;
 }
