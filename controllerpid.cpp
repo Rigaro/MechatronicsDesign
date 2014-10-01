@@ -49,16 +49,11 @@ Performs the derivative correction for the current position.
 */
 double ControllerPID::DerivativeCorrection(double delta)
 {
-    double errorDif = error - previousError;
-    double absErrorDif;
+    double errorDiff = error - previousError;
+    double absErrorDiff = abs(errorDiff);
 
-    if(errorDif >= 0)
-        absErrorDif = errorDif;
-    else
-        absErrorDif = -1*errorDif;
-
-    if( absErrorDif > BALL_RAD)
-        derivative = gainD * errorDif / delta;
+    if (absErrorDiff > BALL_RAD)
+        derivative = gainD * errorDiff / delta;
     else
         derivative = 0;
 
