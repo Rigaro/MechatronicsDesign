@@ -31,7 +31,7 @@ int main(int argc, char** argv)
 {
     MainProgram();
 
-    system("pause");
+    return 0;
 }
 
 double getAverageFPS()
