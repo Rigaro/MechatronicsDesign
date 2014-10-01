@@ -72,12 +72,15 @@
     <ClCompile Include="..\fscontroller.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\SendSerial.cpp" />
+    <ClCompile Include="..\dualaxiscontroller.cpp" />
+    <ClCompile Include="..\tiltcontroller.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Camera.h" />
     <ClInclude Include="..\controller.h" />
     <ClInclude Include="..\controllerpid.h" />
-    <ClInclude Include="..\controllertilt.h" />
+    <ClInclude Include="..\dualaxiscontroller.h" />
+    <ClInclude Include="..\tiltcontroller.h" />
     <ClInclude Include="..\fscontroller.h" />
     <ClInclude Include="..\SendSerial.h" />
   </ItemGroup>

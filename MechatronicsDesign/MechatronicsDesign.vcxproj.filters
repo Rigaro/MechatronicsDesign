@@ -33,6 +33,12 @@
     <ClCompile Include="..\controllerpid.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\tiltcontroller.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\dualaxiscontroller.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Camera.h">
@@ -50,7 +56,10 @@
     <ClInclude Include="..\controllerpid.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\controllertilt.h">
+    <ClInclude Include="..\tiltcontroller.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\dualaxiscontroller.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
