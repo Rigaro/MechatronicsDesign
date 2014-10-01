@@ -7,6 +7,7 @@ using namespace cv;
 using namespace std;
 
 Mat ImageProcessing(Mat, int, int);
+Mat ImageProcessing(Mat, int, int, int, int, int, int, int);
 Mat GetBallPosition(int*, int*, int*, vector<Vec3f>, Mat);
 
 #endif // CAMERA_H

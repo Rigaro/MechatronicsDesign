@@ -1,4 +1,8 @@
 #include "controllerpid.h"
+#include <iostream>
+#include <stdio.h>
+
+using namespace std;
 
 ControllerPID::ControllerPID() : Controller()
 {
@@ -45,7 +49,18 @@ Performs the derivative correction for the current position.
 */
 double ControllerPID::DerivativeCorrection(double delta)
 {
-    derivative = gainD * (error - previousError) / delta;
+    double errorDif = error - previousError;
+    double absErrorDif;
+
+    if(errorDif >= 0)
+        absErrorDif = errorDif;
+    else
+        absErrorDif = -1*errorDif;
+
+    if( absErrorDif > BALL_RAD)
+        derivative = gainD * errorDif / delta;
+    else
+        derivative = 0;
 
     return derivative;
 }
@@ -87,5 +102,30 @@ int ControllerPID::PositionControl(int curPos_px, double frameDelta)
 
     controlSignal = ClampSaturation(controlSignal);
 
+    printf("Derivative: %0.2f, Integral: %0.2f, Prop: %0.2f\n",
+           derivative, integral, GetGainP()*error);
+
     return NormalizeData(controlSignal);
+}
+
+void ControllerPID::setGainI(double gainI)
+{
+    this->gainI = gainI;
+}
+
+void ControllerPID::setGainD(double gainD)
+{
+    this->gainD = gainD;
+}
+
+//Getters
+double ControllerPID::getGainI()
+{
+    return gainI;
+}
+
+//Getters
+double ControllerPID::getGainD()
+{
+    return gainD;
 }
