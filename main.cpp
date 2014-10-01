@@ -64,9 +64,38 @@ int MainProgram()
     int xPosBall = 0, yPosBall = 0, radius = 0;
     int xAngle = BOARD_0_XANG, prevXAngle = xAngle;
     int yAngle = BOARD_0_YANG, prevYAngle = yAngle;
-    int integralNum = 1, integralDen = 100, derivativeNum = 0, derivativeDen = 5, propNum = 30, propDen = 1;
+    //int integralNum = 1, integralDen = 100, derivativeNum = 0, derivativeDen = 5, propNum = 30, propDen = 1;
 
-    /* 
+    Mat source, processed;
+    vector<Vec3f> circles;
+    //Get video
+    VideoCapture cap(CAM_INDEX);
+
+    namedWindow("Original", CV_WINDOW_AUTOSIZE);
+
+    //Trackbar for circle detection tunning.
+    //cvCreateTrackbar("Upper","Original",&upperThres,200);
+    //cvCreateTrackbar("Center","Original",&centerThres,200);
+    
+    /*cvCreateTrackbar("integralNum","Original",&integralNum,9);
+    cvCreateTrackbar("integralDen","Original",&integralDen,1000);
+    cvCreateTrackbar("derivativeNum","Original",&derivativeNum,1000);
+    cvCreateTrackbar("derivativeDen","Original",&derivativeDen,100);
+    cvCreateTrackbar("propNum","Original",&propNum,1000);
+    cvCreateTrackbar("propDen","Original",&propDen,100);
+
+    ControllerPID xControl(0, 6, propNum/propDen, integralNum/integralDen, derivativeNum/derivativeDen);
+    ControllerPID yControl(0, 6, propNum/propDen, integralNum/integralDen, derivativeNum/derivativeDen);
+    */
+
+    // Tilt-based controller
+    TiltController xControl = TiltController(0, 2, BOARD_0_XANG, 0.2, 0.05, BALL_RAD);
+    TiltController yControl = TiltController(0, 2, BOARD_0_YANG, 0.2, 0.05, BALL_RAD);
+
+    xControl.SetDesiredPos_px(368);
+    yControl.SetDesiredPos_px(356);
+    
+    /*
     To determine our sample frequency, we must determine the frame rate of the
     camera, as this is the frequency at which we receive updates.
     i.e. VideoCapture.read is a blocking method, so we will only process when
@@ -79,28 +108,6 @@ int MainProgram()
     double frameTime = 0, frameDelta = 0;
     double averageFPS = 0;
 
-    Mat source, processed;
-    vector<Vec3f> circles;
-    //Get video
-    VideoCapture cap(CAM_INDEX);
-
-    namedWindow("Original", CV_WINDOW_AUTOSIZE);
-
-    //Trackbar for circle detection tunning.
-    //cvCreateTrackbar("Upper","Original",&upperThres,200);
-    //cvCreateTrackbar("Center","Original",&centerThres,200);
-    cvCreateTrackbar("integralNum","Original",&integralNum,9);
-    cvCreateTrackbar("integralDen","Original",&integralDen,1000);
-    cvCreateTrackbar("derivativeNum","Original",&derivativeNum,1000);
-    cvCreateTrackbar("derivativeDen","Original",&derivativeDen,100);
-    cvCreateTrackbar("propNum","Original",&propNum,1000);
-    cvCreateTrackbar("propDen","Original",&propDen,100);
-
-    ControllerPID xControl(0, 6, propNum/propDen, integralNum/integralDen, derivativeNum/derivativeDen);
-    ControllerPID yControl(0, 6, propNum/propDen, integralNum/integralDen, derivativeNum/derivativeDen);
-    xControl.SetDesiredPos_px(368);
-    yControl.SetDesiredPos_px(356);
-
     if(!cap.isOpened())
     {
         cout << "can not open video" << endl;
@@ -108,16 +115,17 @@ int MainProgram()
         return -1;
     }
 
-    averageFPS = getAverageFPS();
+    averageFPS = getAverageFPS(); // initialize
 
     while (INFINITE_LOOP)
     {
-        xControl.setGainI(1.0*integralNum/integralDen);
+        /*xControl.setGainI(1.0*integralNum/integralDen);
         xControl.setGainD(1.0*derivativeNum/derivativeDen);
         xControl.SetGainP(1.0*propNum/propDen);
         yControl.setGainI(1.0*integralNum/integralDen);
         yControl.setGainD(1.0*derivativeNum/derivativeDen);
         yControl.SetGainP(1.0*propNum/propDen);
+        */
 
         beforeCapTime = (double)getTickCount();
 
@@ -149,7 +157,7 @@ int MainProgram()
 
         ballOnBoard = circles.size() != 0;
 
-        if(ballOnBoard) 
+        if (ballOnBoard) 
         {
             source = GetBallPosition(&xPosBall, &yPosBall, &radius, circles, 
                                      source);
@@ -163,11 +171,13 @@ int MainProgram()
             prevXAngle = xAngle;
             prevYAngle = yAngle;
 
-            xAngle = xControl.PositionControl(xPosBall, frameDelta);
-            yAngle = yControl.PositionControl(yPosBall, frameDelta);
-        }
+            // Update the action time to be our frame delta minus 10ms
+            xControl.setTiltActionTime(frameDelta - 0.01);
+            yControl.setTiltActionTime(frameDelta - 0.01);
 
-        
+            xAngle = xControl.PositionControl(xPosBall);
+            yAngle = yControl.PositionControl(yPosBall);
+        }
 
         //Send x data
         SendSerial(xAngle, 'x', PORT_0);
