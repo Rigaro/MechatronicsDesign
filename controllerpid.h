@@ -2,8 +2,6 @@
 #define CONTROLLERPID_H
 
 #include "controller.h"
-
-#define BALL_RAD 7
 class ControllerPID : public Controller
 {
     public:

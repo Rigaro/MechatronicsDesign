@@ -4,6 +4,8 @@
 #define UPPERLIMIT 100
 #define LOWERLIMIT -100
 
+#define BALL_RAD 7
+
 class Controller
 {
     public:
