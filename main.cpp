@@ -97,7 +97,7 @@ int MainProgram()
     TiltController yControl = TiltController(0, 2, BOARD_0_YANG, 0.2, 0.05, BALL_RAD);
 
     // Dual axis control
-    DualAxisController control = DualAxisController(0, 2, 8, 0.2, 0.05, BALL_RAD);
+    DualAxisController control = DualAxisController(0, 2, BOARD_0_XANG, 0.2, 0.05, BALL_RAD);
     control.setXYDesiredPosition_px(368, 356);
 
     xControl.SetDesiredPos_px(368);
@@ -183,7 +183,13 @@ int MainProgram()
             yControl.setTiltActionTime(frameDelta - 0.01);
 
             xAngle = xControl.PositionControl(xPosBall);
-            yAngle = yControl.PositionControl(yPosBall);
+            /* Prevent Y from changing if X is not at the zero position, to
+            'emulate' dual axis control, this should prevent the ball
+            shooting off in a diagonal if they both change at once. This
+            only happens if Y is also at the zero position (or it'll be
+            stuck on a angle!) */
+            if (xAngle != BOARD_0_XANG && yAngle == BOARD_0_YANG)
+                yAngle = yControl.PositionControl(yPosBall);
 
             // DUAL AXIS CONTROLLER (controls both axis, moves one at a time).
             // Controls regardless of whether we found a ball or not.
