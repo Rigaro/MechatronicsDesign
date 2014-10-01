@@ -26,13 +26,8 @@ Controller::Controller()
 //@param controller output lower limit.
 //@param controller output upper limit.
 //@param controller proportional gain.
-Controller::Controller(int outputMin_deg, int outputMax_deg, double gainP)
+Controller::Controller(int outputMin_deg, int outputMax_deg, double gainP) : Controller()
 {
-    error = 0;
-    desPos_px = 0;
-    desPos_mm = 0.0;
-    curPos_px = 0;
-    curPos_mm = 0.0;
     this->gainP = gainP;
     this->outputMin_deg = outputMin_deg;
     this->outputMax_deg = outputMax_deg;
