@@ -1,8 +1,12 @@
 #include "SendSerial.h"
 #include "Camera.h"
+
+// Various programmed controllers
 #include "controller.h"
 #include "controllerpid.h"
 #include "tiltcontroller.h"
+#include "dualaxiscontroller.h"
+
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv/cv.h"
@@ -92,6 +96,10 @@ int MainProgram()
     TiltController xControl = TiltController(0, 2, BOARD_0_XANG, 0.2, 0.05, BALL_RAD);
     TiltController yControl = TiltController(0, 2, BOARD_0_YANG, 0.2, 0.05, BALL_RAD);
 
+    // Dual axis control
+    DualAxisController control = DualAxisController(0, 2, 8, 0.2, 0.05, BALL_RAD);
+    control.setXYDesiredPosition_px(368, 356);
+
     xControl.SetDesiredPos_px(368);
     yControl.SetDesiredPos_px(356);
     
@@ -161,7 +169,6 @@ int MainProgram()
         {
             source = GetBallPosition(&xPosBall, &yPosBall, &radius, circles, 
                                      source);
-
             /* 
             We now have the position of the ball based on the pixels in the
             source stream. The origin (0,0) coordinate is the top left of the
@@ -171,12 +178,31 @@ int MainProgram()
             prevXAngle = xAngle;
             prevYAngle = yAngle;
 
-            // Update the action time to be our frame delta minus 10ms
+            // SINGLE AXIS CONTROLLERS (1 control per axis)
             xControl.setTiltActionTime(frameDelta - 0.01);
             yControl.setTiltActionTime(frameDelta - 0.01);
 
             xAngle = xControl.PositionControl(xPosBall);
             yAngle = yControl.PositionControl(yPosBall);
+
+            // DUAL AXIS CONTROLLER (controls both axis, moves one at a time).
+            // Controls regardless of whether we found a ball or not.
+            control.setTiltActionTime(frameDelta - 0.01);
+
+            if (control.AtDesiredPosition())
+                // let's go to a new position!!
+                control.setXYDesiredPosition_px(300, 300);
+
+            Point xyAngle = control.AngleControl(xPosBall, yPosBall);
+            //xAngle = xyAngle.x;
+            //yAngle = xyAngle.y;
+        }
+        else
+        {
+            // If using tilt control, we want the board to be flat if we don't
+            // detect the ball.
+            xAngle = BOARD_0_XANG;
+            yAngle = BOARD_0_YANG;
         }
 
         //Send x data
@@ -253,3 +279,4 @@ int SerialTest()
     }
     return 0;
 }
+
