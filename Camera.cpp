@@ -37,6 +37,31 @@ Mat ImageProcessing(Mat source, int thres, int morphSize)
     return thresholded;
 }
 
+Mat ImageProcessing(Mat source, int lowH, int highH, int lowS, int highS, int lowV, int highV, int morphSize)
+{
+    //TODO: Go over http://stackoverflow.com/questions/9860667/writing-robust-color-and-size-invariant-circle-detection-with-opencv-based-on
+    Mat imgHSV, thresholded;
+
+    // Blur out noise
+    //GaussianBlur(source, source, Size(9, 9), 2, 2);
+
+    //Convert from BGR to HSV
+    cvtColor(source, imgHSV, COLOR_BGR2HSV);
+
+    //Threshold the image
+    inRange(imgHSV, Scalar(lowH,lowS,lowV), Scalar(highH,highS,highV), thresholded);
+
+
+    //Morph opening (remove small objects from foreground)
+    erode(thresholded, thresholded, getStructuringElement(MORPH_ELLIPSE, Size(morphSize,morphSize)));
+    dilate(thresholded, thresholded, getStructuringElement(MORPH_ELLIPSE, Size(morphSize,morphSize)));
+    //Morph closing (fill small holes from foreground)
+    dilate(thresholded, thresholded, getStructuringElement(MORPH_ELLIPSE, Size(morphSize,morphSize)));
+    erode(thresholded, thresholded, getStructuringElement(MORPH_ELLIPSE, Size(morphSize,morphSize)));
+
+    return thresholded;
+}
+
 //Gets the ball position from the HoughCircles output and sets them to program variables.
 //@param x position variable address pointer.
 //@param y position variable address pointer.

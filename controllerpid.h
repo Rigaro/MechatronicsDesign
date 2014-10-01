@@ -3,6 +3,7 @@
 
 #include "controller.h"
 
+#define BALL_RAD 7
 class ControllerPID : public Controller
 {
     public:
@@ -11,6 +12,10 @@ class ControllerPID : public Controller
         int PositionControl(int, int); // calculate frame delta w/ sample freq
         int PositionControl(int, int, double); // provide frame delta & des pos
         int PositionControl(int, double); // provide frame delta and curr pos
+        void setGainI(double);
+        void setGainD(double);
+        double getGainI();
+        double getGainD();
 
     private:
         double gainI;

@@ -7,6 +7,7 @@
 #include "opencv/cv.h"
 #include <iostream>
 #include <stdio.h>
+#include <unistd.h>
 
 #if defined(WIN32) || defined(WIN64)
 #include <Windows.h>
@@ -16,7 +17,7 @@
 #define BOARD_0_XANG 8
 #define BOARD_0_YANG 8
 
-#define CAM_INDEX 0
+#define CAM_INDEX 2
 
 #define FPS_MAX 24
 
@@ -30,6 +31,7 @@ double getAverageFPS();
 int main(int argc, char** argv)
 {
     MainProgram();
+    //SerialTest();
 
     return 0;
 }
@@ -53,12 +55,12 @@ double getAverageFPS()
 int MainProgram()
 {
     bool ballOnBoard = false;
-    int thresh = 105;
-    int upperThres = 8;
-    int centerThres = 8;
+    int upperThres = 10;
+    int centerThres = 5;
     int xPosBall = 0, yPosBall = 0, radius = 0;
     int xAngle = BOARD_0_XANG, prevXAngle = xAngle;
     int yAngle = BOARD_0_YANG, prevYAngle = yAngle;
+    int integralNum = 1, integralDen = 100, derivativeNum = 0, derivativeDen = 5, propNum = 30, propDen = 1;
 
     /* 
     To determine our sample frequency, we must determine the frame rate of the
@@ -69,7 +71,7 @@ int MainProgram()
 
     In ideal conditions, our FPS sits on 24.
     */
-    double currTime = 0, beforeCapTime = 0, prevTime = 0;
+    double currTime = 0, beforeCapTime = 0, prevTime = (double)getTickCount();
     double frameTime = 0, frameDelta = 0;
     double averageFPS = 0;
 
@@ -78,17 +80,22 @@ int MainProgram()
     //Get video
     VideoCapture cap(CAM_INDEX);
 
-    ControllerPID xControl(0, 16, 0.1, 0.1, 0.01);
-    ControllerPID yControl(0, 16, 0.1, 0.1, 0.01);
-    xControl.SetDesiredPos_px(150);
-    yControl.SetDesiredPos_px(300);
-
     namedWindow("Original", CV_WINDOW_AUTOSIZE);
 
     //Trackbar for circle detection tunning.
-    cvCreateTrackbar("Threshold","Original",&thresh,255);
-    cvCreateTrackbar("Upper","Original",&upperThres,200);
-    cvCreateTrackbar("Center","Original",&centerThres,200);
+    //cvCreateTrackbar("Upper","Original",&upperThres,200);
+    //cvCreateTrackbar("Center","Original",&centerThres,200);
+    cvCreateTrackbar("integralNum","Original",&integralNum,9);
+    cvCreateTrackbar("integralDen","Original",&integralDen,1000);
+    cvCreateTrackbar("derivativeNum","Original",&derivativeNum,1000);
+    cvCreateTrackbar("derivativeDen","Original",&derivativeDen,100);
+    cvCreateTrackbar("propNum","Original",&propNum,1000);
+    cvCreateTrackbar("propDen","Original",&propDen,100);
+
+    ControllerPID xControl(0, 6, propNum/propDen, integralNum/integralDen, derivativeNum/derivativeDen);
+    ControllerPID yControl(0, 6, propNum/propDen, integralNum/integralDen, derivativeNum/derivativeDen);
+    xControl.SetDesiredPos_px(368);
+    yControl.SetDesiredPos_px(356);
 
     if(!cap.isOpened())
     {
@@ -101,6 +108,13 @@ int MainProgram()
 
     while (INFINITE_LOOP)
     {
+        xControl.setGainI(1.0*integralNum/integralDen);
+        xControl.setGainD(1.0*derivativeNum/derivativeDen);
+        xControl.SetGainP(1.0*propNum/propDen);
+        yControl.setGainI(1.0*integralNum/integralDen);
+        yControl.setGainD(1.0*derivativeNum/derivativeDen);
+        yControl.SetGainP(1.0*propNum/propDen);
+
         beforeCapTime = (double)getTickCount();
 
         bool bSuccess = cap.read(source);
@@ -123,7 +137,7 @@ int MainProgram()
             break;
         }
 
-        processed = ImageProcessing(source, thresh, 9);
+        processed = ImageProcessing(source, 35, 90, 0, 255, 70, 255, 9);
 
         //Get circles from processed image.
         HoughCircles(processed, circles, CV_HOUGH_GRADIENT, 1, processed.rows/8, 
@@ -165,13 +179,14 @@ int MainProgram()
         imshow("Original", source);
         imshow("Thresh", processed);
         
-        //Sleep(100);
+        //usleep(100000);
 
         //Stop process when esc is pressed.
         if(waitKey(30) == 27)
         {
             break;
         }
+        //break;
     }
 
     return 0;
@@ -211,9 +226,9 @@ int SerialTest()
         }
 
         //Send x data
-        SendSerial(xAngle, 'x', PORT_0);
+        SendSerial(xAngle, 'x', PORT_1);
         //Send y data
-        SendSerial(yAngle, 'y', PORT_0);
+        SendSerial(yAngle, 'y', PORT_1);
 
         imshow("Test", src);
 
