@@ -2,12 +2,15 @@
 #include "Camera.h"
 #include "controller.h"
 #include "controllerpid.h"
+#include "controllertilt.h"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv/cv.h"
 #include <iostream>
 #include <stdio.h>
+#ifdef UNIX
 #include <unistd.h>
+#endif
 
 #if defined(WIN32) || defined(WIN64)
 #include <Windows.h>
