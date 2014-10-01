@@ -72,7 +72,7 @@ calculation
 int ControllerPID::PositionControl(int desPox_px, int curPos_px)
 {
     double frameDelta = 1 / samplingFreq;
-    return PositionControl(desPos_px, curPos_px);
+    return PositionControl(desPos_px, frameDelta);
 }
 
 /**
