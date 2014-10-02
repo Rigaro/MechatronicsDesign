@@ -22,8 +22,8 @@
 #endif
 
 #define INFINITE_LOOP true
-#define BOARD_0_XANG 8
-#define BOARD_0_YANG 8
+#define BOARD_0_XANG 3
+#define BOARD_0_YANG 2
 
 #define CAM_INDEX 2
 
@@ -65,6 +65,7 @@ int MainProgram()
     bool ballOnBoard = false;
     int upperThres = 10;
     int centerThres = 5;
+    int minRad = 12, maxRad = 15;
     int xPosBall = 0, yPosBall = 0, radius = 0;
     int xAngle = BOARD_0_XANG, prevXAngle = xAngle;
     int yAngle = BOARD_0_YANG, prevYAngle = yAngle;
@@ -77,10 +78,13 @@ int MainProgram()
 
     namedWindow("Original", CV_WINDOW_AUTOSIZE);
 
+    /*
     //Trackbar for circle detection tunning.
-    //cvCreateTrackbar("Upper","Original",&upperThres,200);
-    //cvCreateTrackbar("Center","Original",&centerThres,200);
-    
+    cvCreateTrackbar("Upper","Original",&upperThres,200);
+    cvCreateTrackbar("Center","Original",&centerThres,200);
+    cvCreateTrackbar("Min Rad","Original",&minRad,30);
+    cvCreateTrackbar("Max Rad","Original",&maxRad,50);
+    */
     /*cvCreateTrackbar("integralNum","Original",&integralNum,9);
     cvCreateTrackbar("integralDen","Original",&integralDen,1000);
     cvCreateTrackbar("derivativeNum","Original",&derivativeNum,1000);
@@ -93,15 +97,25 @@ int MainProgram()
     */
 
     // Tilt-based controller
-    TiltController xControl = TiltController(0, 2, BOARD_0_XANG, 0.2, 0.05, BALL_RAD);
-    TiltController yControl = TiltController(0, 2, BOARD_0_YANG, 0.2, 0.05, BALL_RAD);
+    // WORKING: BOTH AT 500ms delay, 100ms tilt action
+    int xTiltDelay = 705;
+    int xTiltActionTime = 100;
+    int yTiltDelay = 500;
+    int yTiltActionTime = 100;
+    cvCreateTrackbar("xTiltDelay", "Original", &xTiltDelay, 2000);
+    cvCreateTrackbar("xTiltActionTime", "Original", &xTiltActionTime, 2000);
+    cvCreateTrackbar("yTiltDelay", "Original", &yTiltDelay, 2000);
+    cvCreateTrackbar("yTiltActionTime", "Original", &yTiltActionTime, 2000);
+
+    TiltController xControl = TiltController(0, 6, BOARD_0_XANG, xTiltDelay, xTiltActionTime, minRad);
+    TiltController yControl = TiltController(0, 4, BOARD_0_YANG, yTiltDelay, yTiltActionTime, minRad);
 
     // Dual axis control
     DualAxisController control = DualAxisController(0, 2, BOARD_0_XANG, 0.2, 0.05, BALL_RAD);
     control.setXYDesiredPosition_px(368, 356);
 
-    xControl.SetDesiredPos_px(368);
-    yControl.SetDesiredPos_px(356);
+    xControl.setDesiredPos_px(172);
+    yControl.setDesiredPos_px(78);
     
     /*
     To determine our sample frequency, we must determine the frame rate of the
@@ -135,6 +149,11 @@ int MainProgram()
         yControl.SetGainP(1.0*propNum/propDen);
         */
 
+        xControl.setTiltDelay(xTiltDelay);
+        xControl.setTiltActionTime(xTiltActionTime);
+        yControl.setTiltDelay(yTiltDelay);
+        yControl.setTiltActionTime(yTiltActionTime);
+
         beforeCapTime = (double)getTickCount();
 
         bool bSuccess = cap.read(source);
@@ -161,7 +180,7 @@ int MainProgram()
 
         //Get circles from processed image.
         HoughCircles(processed, circles, CV_HOUGH_GRADIENT, 1, processed.rows/8, 
-                     upperThres, centerThres, 15, 25);
+                     upperThres, centerThres, minRad, maxRad);
 
         ballOnBoard = circles.size() != 0;
 
@@ -179,21 +198,21 @@ int MainProgram()
             prevYAngle = yAngle;
 
             // SINGLE AXIS CONTROLLERS (1 control per axis)
-            xControl.setTiltActionTime(frameDelta - 0.01);
-            yControl.setTiltActionTime(frameDelta - 0.01);
+            //xControl.setTiltActionTime(frameDelta*1000 - 100);
+            //yControl.setTiltActionTime(frameDelta*1000 - 100);
 
-            xAngle = xControl.PositionControl(xPosBall);
+            if (yAngle == BOARD_0_YANG)
+                xAngle = xControl.positionControl(xPosBall);
             /* Prevent Y from changing if X is not at the zero position, to
             'emulate' dual axis control, this should prevent the ball
             shooting off in a diagonal if they both change at once. This
             only happens if Y is also at the zero position (or it'll be
             stuck on a angle!) */
-            if (xAngle != BOARD_0_XANG && yAngle == BOARD_0_YANG)
-                yAngle = yControl.PositionControl(yPosBall);
+            if (xAngle == BOARD_0_XANG)
+                yAngle = yControl.positionControl(yPosBall);
 
             // DUAL AXIS CONTROLLER (controls both axis, moves one at a time).
-            // Controls regardless of whether we found a ball or not.
-            control.setTiltActionTime(frameDelta - 0.01);
+            //control.setTiltActionTime(frameDelta - 0.01);
 
             if (control.AtDesiredPosition())
                 // let's go to a new position!!
@@ -243,7 +262,7 @@ int MainProgram()
 int SerialTest()
 {
     int xAngle = 65;
-    int yAngle = 98;
+    int yAngle = 91;
 
     Mat src;
 
@@ -272,9 +291,9 @@ int SerialTest()
         }
 
         //Send x data
-        SendSerial(xAngle, 'x', PORT_1);
+        SendSerial(xAngle, 'x', PORT_0);
         //Send y data
-        SendSerial(yAngle, 'y', PORT_1);
+        SendSerial(yAngle, 'y', PORT_0);
 
         imshow("Test", src);
 

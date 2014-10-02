@@ -6,6 +6,7 @@ TiltController::TiltController() : Controller()
     tiltDelay = 0;
     tiltActionTime = 0;
     tiltStartTick = 0;
+    outputZero = 0;
 
     minimumPositionError = 0;
 }
@@ -36,12 +37,12 @@ TiltController::TiltController(int outputMin_deg, int outputMax_deg,
 /**
 Wraps PositionControl(desPox_px, curPos_px)
 */
-int TiltController::PositionControl(int desPox_ps, int curPos_px, 
+int TiltController::positionControl(int desPox_ps, int curPos_px, 
                                     double minimumPositionError)
 {
     setMinimumPositionError(minimumPositionError);
 
-    return PositionControl(desPox_ps, curPos_px);
+    return positionControl(desPox_ps, curPos_px);
 }
 
 /**
@@ -50,11 +51,11 @@ Wraps PositionControl(curPos_px)
 @param desPos_px The desired position (in pixels)
 @param curPos_px The current position (in pixels)
 */
-int TiltController::PositionControl(int desPos_px, int curPos_px)
+int TiltController::positionControl(int desPos_px, int curPos_px)
 {
-    SetDesiredPos_px(desPos_px);
+    setDesiredPos_px(desPos_px);
 
-    return PositionControl(curPos_px);
+    return positionControl(curPos_px);
 }
 
 /**
@@ -67,22 +68,23 @@ the set error range, we do nothing.
 
 @param curPos_px The current position (in pixels)
 */
-int TiltController::PositionControl(int curPos_px)
+int TiltController::positionControl(int curPos_px)
 {
-    ComputeError();
+    this->curPos_px = curPos_px;
+    computeError();
 
     double controlSignal = 0;
 
     if (abs(error) <= minimumPositionError)
     {
-        controlSignal = 0;
+        controlSignal = outputZero;
     }
     else
     {
         controlSignal = (double)GetTilt();
     }
 
-    return NormalizeData(ClampSaturation(controlSignal));
+    return clampSaturation(controlSignal);
 }
 
 /**
@@ -97,7 +99,7 @@ int TiltController::GetTilt()
     /* Diff is now the time elapsed in milliseconds since the start of the last
     tilt */
 
-    int tiltAngle = 0;
+    int tiltAngle = outputZero;
     // If diff <= tiltActionTime, we are still inside a tilt action. So we tilt!
     if (diff <= tiltActionTime)
     {
@@ -128,13 +130,18 @@ tilt to the minimum. If the ball error is < 0, we should tilt to the maximum.
 */
 int TiltController::DetermineTiltAngle()
 {
-    int tiltAngle = 0;
-    if (error > 0)
-        tiltAngle = GetOutputMin();
+    if (abs(error) <= minimumPositionError*2)
+    {
+        if (error > 0)
+            return GetOutputMin()+1;
+        else
+            return GetOutputMax()-1;
+    }
+    else if (error > 0)
+        return GetOutputMin();
     else
-        tiltAngle = GetOutputMax();
+        return GetOutputMax();
 
-    return tiltAngle;
 }
 
 

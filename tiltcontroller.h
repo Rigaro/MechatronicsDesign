@@ -9,9 +9,9 @@ class TiltController : public Controller
         TiltController();
         TiltController(int, int, int, double, double, double);
 
-        int PositionControl(int);
-        int PositionControl(int, int);
-        int PositionControl(int, int, double);
+        int positionControl(int);
+        int positionControl(int, int);
+        int positionControl(int, int, double);
 
         void setMinimumPositionError(double);
         double getMinumumPositionError();
