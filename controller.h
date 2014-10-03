@@ -1,8 +1,8 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
-#define UPPERLIMIT 100
-#define LOWERLIMIT -100
+#define UPPERLIMIT 1000
+#define LOWERLIMIT -1000
 
 #define BALL_RAD 12
 
@@ -28,6 +28,12 @@ class Controller
         int GetCurrentPos_px();
         double GetCurrentPos_mm();
         int GetCurrentError();
+
+        bool atDesiredPosition();
+
+        void setMinimumPositionError(double);
+        double getMinumumPositionError();
+
     protected:
         int error;
    
@@ -35,6 +41,9 @@ class Controller
         double desPos_mm;
         int curPos_px;
         double curPos_mm;
+
+        double minimumPositionError;
+
 
         void computeError();
         double proportionalCorrection();

@@ -9,6 +9,8 @@
  */
 #include "controller.h"
 
+#include <stdlib.h>
+
 //Default constructor
 Controller::Controller()
 {
@@ -20,6 +22,8 @@ Controller::Controller()
     gainP = 0.0;
     outputMin_deg = 0;
     outputMax_deg = 0;
+
+    minimumPositionError = 0;
 }
 
 //Initializes controller limits and gain.
@@ -73,14 +77,6 @@ int Controller::positionControl(int curPos_px)
     return normalizeData(controlSignal);
 }
 
-/*
-void transformPos(int posPixel)
-{
-    SetPosPast(posNew);
-    SetPosNew(posPixel*TSCALAR+TCONST);
-}
-*/
-
 //Normalizes control data to the output range.
 //@param data to be normalized.
 //@return normalized control data.
@@ -107,7 +103,22 @@ double Controller::clampSaturation(double output)
     return output;
 }
 
+/**
+ * Let's us know if this axis is at the desired position
+ *
+ * @return bool Whether we are within the minimum position error or not
+ */
+bool Controller::atDesiredPosition()
+{
+    return abs(error) <= 2*minimumPositionError;
+}
+
 //Setters
+void Controller::setMinimumPositionError(double minimumPositionError)
+{
+    this->minimumPositionError = minimumPositionError;
+}
+
 void Controller::setDesiredPos_px(int desPos_px)
 {
     this->desPos_px = desPos_px;
@@ -145,6 +156,11 @@ void Controller::SetOutputMin(int outputMin_deg)
 }
 
 //Getters
+double Controller::getMinumumPositionError()
+{
+    return this->minimumPositionError;
+}
+
 double Controller::GetGainP()
 {
     return gainP;

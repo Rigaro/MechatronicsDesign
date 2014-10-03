@@ -7,8 +7,6 @@ TiltController::TiltController() : Controller()
     tiltActionTime = 0;
     tiltStartTick = 0;
     outputZero = 0;
-
-    minimumPositionError = 0;
 }
 
 /**
@@ -146,11 +144,6 @@ int TiltController::DetermineTiltAngle()
 
 
 /* Setters */
-void TiltController::setMinimumPositionError(double minimumPositionError)
-{
-    this->minimumPositionError = minimumPositionError;
-}
-
 void TiltController::setTiltDelay(double tiltDelay)
 {
     this->tiltDelay = tiltDelay;
@@ -162,10 +155,7 @@ void TiltController::setTiltActionTime(double tiltActionTime)
 }
 
 /* Getters */
-double TiltController::getMinumumPositionError()
-{
-    return this->minimumPositionError;
-}
+
 
 double TiltController::getTiltDelay()
 {

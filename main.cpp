@@ -12,6 +12,7 @@
 #include "opencv/cv.h"
 #include <iostream>
 #include <stdio.h>
+#include <vector>
 
 #ifdef UNIX
 #include <unistd.h>
@@ -69,7 +70,11 @@ int MainProgram()
     int xPosBall = 0, yPosBall = 0, radius = 0;
     int xAngle = BOARD_0_XANG, prevXAngle = xAngle;
     int yAngle = BOARD_0_YANG, prevYAngle = yAngle;
-    //int integralNum = 1, integralDen = 100, derivativeNum = 0, derivativeDen = 5, propNum = 30, propDen = 1;
+    int integralNum = 8, integralDen = 18, derivativeNum = 8, derivativeDen = 28, propNum = 6, propDen = 12;
+    //WITH CONTROLLER LIMIT 100
+    //int integralNum = 8, integralDen = 18, derivativeNum = 8, derivativeDen = 28, propNum = 6, propDen = 12;
+    //WITH CONTROLLER LIMIT 1000
+    //int integralNum = 40, integralDen = 5, derivativeNum = 23, derivativeDen = 5, propNum = 14, propDen = 5;
 
     Mat source, processed;
     vector<Vec3f> circles;
@@ -85,21 +90,22 @@ int MainProgram()
     cvCreateTrackbar("Min Rad","Original",&minRad,30);
     cvCreateTrackbar("Max Rad","Original",&maxRad,50);
     */
-    /*cvCreateTrackbar("integralNum","Original",&integralNum,9);
-    cvCreateTrackbar("integralDen","Original",&integralDen,1000);
-    cvCreateTrackbar("derivativeNum","Original",&derivativeNum,1000);
+    cvCreateTrackbar("integralNum","Original",&integralNum,100);
+    cvCreateTrackbar("integralDen","Original",&integralDen,100);
+    cvCreateTrackbar("derivativeNum","Original",&derivativeNum,100);
     cvCreateTrackbar("derivativeDen","Original",&derivativeDen,100);
-    cvCreateTrackbar("propNum","Original",&propNum,1000);
+    cvCreateTrackbar("propNum","Original",&propNum,100);
     cvCreateTrackbar("propDen","Original",&propDen,100);
 
-    ControllerPID xControl(0, 6, propNum/propDen, integralNum/integralDen, derivativeNum/derivativeDen);
-    ControllerPID yControl(0, 6, propNum/propDen, integralNum/integralDen, derivativeNum/derivativeDen);
-    */
+    ControllerPID xControl(0, 20, propNum/propDen, integralNum/integralDen, derivativeNum/derivativeDen);
+    ControllerPID yControl(0, 20, propNum/propDen, integralNum/integralDen, derivativeNum/derivativeDen);
 
+
+    /*
     // Tilt-based controller
     // WORKING: BOTH AT 500ms delay, 100ms tilt action
     int xTiltDelay = 705;
-    int xTiltActionTime = 100;
+    int xTiltActionTime = 45;
     int yTiltDelay = 500;
     int yTiltActionTime = 100;
     cvCreateTrackbar("xTiltDelay", "Original", &xTiltDelay, 2000);
@@ -116,7 +122,8 @@ int MainProgram()
 
     xControl.setDesiredPos_px(172);
     yControl.setDesiredPos_px(78);
-    
+    */
+
     /*
     To determine our sample frequency, we must determine the frame rate of the
     camera, as this is the frequency at which we receive updates.
@@ -139,21 +146,40 @@ int MainProgram()
 
     averageFPS = getAverageFPS(); // initialize
 
+    /*
+    // setup our desired path
+    vector<Point> path;
+
+    //path.push_back(Point(526, 434)); // START POINT
+    path.push_back(Point(464, 366));
+    path.push_back(Point(360, 352));
+    path.push_back(Point(268, 382));
+    path.push_back(Point(158, 370)); // GATE 1?
+    path.push_back(Point(88, 340));
+    path.push_back(Point(202, 238));
+    path.push_back(Point(474, 188));
+    path.push_back(Point(448, 82));
+    path.push_back(Point(364, 74));
+    path.push_back(Point(256, 78));
+    path.push_back(Point(172, 78));
+    int currPosition = 0;
+    */
+
     while (INFINITE_LOOP)
     {
-        /*xControl.setGainI(1.0*integralNum/integralDen);
+        xControl.setGainI(1.0*integralNum/integralDen);
         xControl.setGainD(1.0*derivativeNum/derivativeDen);
         xControl.SetGainP(1.0*propNum/propDen);
         yControl.setGainI(1.0*integralNum/integralDen);
         yControl.setGainD(1.0*derivativeNum/derivativeDen);
         yControl.SetGainP(1.0*propNum/propDen);
-        */
 
+        /*
         xControl.setTiltDelay(xTiltDelay);
         xControl.setTiltActionTime(xTiltActionTime);
         yControl.setTiltDelay(yTiltDelay);
         yControl.setTiltActionTime(yTiltActionTime);
-
+        */
         beforeCapTime = (double)getTickCount();
 
         bool bSuccess = cap.read(source);
@@ -182,6 +208,18 @@ int MainProgram()
         HoughCircles(processed, circles, CV_HOUGH_GRADIENT, 1, processed.rows/8, 
                      upperThres, centerThres, minRad, maxRad);
 
+        /*
+        Point newPos = path[currPosition];
+        printf("Num pos: %d, curPos: %d,  New des position - x: %d, y: %d\n", path.size(), currPosition, newPos.x, newPos.y);
+        */
+        xControl.setDesiredPos_px(300);
+        yControl.setDesiredPos_px(300);
+
+        printf("x des pos: %d, y des pos: %d\n", xControl.GetDesiredPos_px(),
+               yControl.GetDesiredPos_px());
+
+        //circle(source, newPos, 4, Scalar(255,0,0), -1, 8, 0);
+
         ballOnBoard = circles.size() != 0;
 
         if (ballOnBoard) 
@@ -201,27 +239,17 @@ int MainProgram()
             //xControl.setTiltActionTime(frameDelta*1000 - 100);
             //yControl.setTiltActionTime(frameDelta*1000 - 100);
 
-            if (yAngle == BOARD_0_YANG)
-                xAngle = xControl.positionControl(xPosBall);
+            //if (yAngle == BOARD_0_YANG)
+                xAngle = xControl.positionControl(xPosBall,frameDelta);
             /* Prevent Y from changing if X is not at the zero position, to
             'emulate' dual axis control, this should prevent the ball
             shooting off in a diagonal if they both change at once. This
             only happens if Y is also at the zero position (or it'll be
             stuck on a angle!) */
-            if (xAngle == BOARD_0_XANG)
-                yAngle = yControl.positionControl(yPosBall);
-
-            // DUAL AXIS CONTROLLER (controls both axis, moves one at a time).
-            //control.setTiltActionTime(frameDelta - 0.01);
-
-            if (control.AtDesiredPosition())
-                // let's go to a new position!!
-                control.setXYDesiredPosition_px(300, 300);
-
-            Point xyAngle = control.AngleControl(xPosBall, yPosBall);
-            //xAngle = xyAngle.x;
-            //yAngle = xyAngle.y;
+            //if (xAngle == BOARD_0_XANG)
+                yAngle = yControl.positionControl(yPosBall,frameDelta);
         }
+        /*
         else
         {
             // If using tilt control, we want the board to be flat if we don't
@@ -229,7 +257,7 @@ int MainProgram()
             xAngle = BOARD_0_XANG;
             yAngle = BOARD_0_YANG;
         }
-
+        */
         //Send x data
         SendSerial(xAngle, 'x', PORT_0);
         //Send y data
@@ -241,6 +269,21 @@ int MainProgram()
         printf("C Y ang: %d, D Y ang: %d, y pos: %d, y error: %d\n", yAngle,
             prevYAngle, yPosBall, yControl.GetCurrentError());
 
+        /*
+        // If we're at the desired position, increment the path counter so we try
+        // to go to the next point starting with the next frame
+        if (xControl.atDesiredPosition() && yControl.atDesiredPosition())
+        {
+            currPosition++;
+
+            if (currPosition >= (int)path.size())
+            {
+                cout << "AT END POINT. EXITING" << endl;
+                break;
+            }
+        }
+        */
+
         imshow("Original", source);
         imshow("Thresh", processed);
         
@@ -251,7 +294,6 @@ int MainProgram()
         {
             break;
         }
-        //break;
     }
 
     return 0;

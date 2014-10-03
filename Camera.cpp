@@ -60,7 +60,7 @@ Mat ImageProcessing(Mat source, int lowH, int highH, int lowS, int highS, int lo
     erode(thresholded, thresholded, getStructuringElement(MORPH_ELLIPSE, Size(morphSize,morphSize)));
 
     for(int rows = 0; rows < thresholded.rows; rows++) {
-        for(int cols = 0; cols <= 11; cols++) {
+        for(int cols = 0; cols <= 16; cols++) {
             Vec3b point = thresholded.at<Vec3b>(Point(cols, rows));
             point.val[0] = 255;
             point.val[1] = 255;
@@ -70,7 +70,7 @@ Mat ImageProcessing(Mat source, int lowH, int highH, int lowS, int highS, int lo
     }
 
     for(int rows = 0; rows < thresholded.rows; rows++) {
-        for(int cols = 627; cols <= thresholded.cols; cols++) {
+        for(int cols = 620; cols <= thresholded.cols; cols++) {
             Vec3b point = thresholded.at<Vec3b>(Point(cols, rows));
             point.val[0] = 255;
             point.val[1] = 255;

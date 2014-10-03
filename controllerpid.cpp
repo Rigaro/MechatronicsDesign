@@ -40,6 +40,10 @@ Performs the integral correction for the current position.
 double ControllerPID::integralCorrection(double delta)
 {
     integral = integral + gainI*error*delta;
+    if(integral > UPPERLIMIT)
+        integral = UPPERLIMIT;
+    else if(integral < LOWERLIMIT)
+        integral = LOWERLIMIT;
 
     return integral;
 }
