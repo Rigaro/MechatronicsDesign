@@ -57,7 +57,7 @@ double ControllerPID::derivativeCorrection(double delta)
     double errorDiff = error - previousError;
     double absErrorDiff = abs(errorDiff);
 
-    if (absErrorDiff > BALL_RAD)
+    if (absErrorDiff > minimumPositionError)
         derivative = gainD * errorDiff / delta;
     else
         derivative = 0;
@@ -103,8 +103,11 @@ int ControllerPID::positionControl(int curPos_px, double frameDelta)
 
     controlSignal = clampSaturation(controlSignal);
 
-    printf("Derivative: %0.2f, Integral: %0.2f, Prop: %0.2f\n",
-           derivative, integral, GetGainP()*error);
+    //if(abs(error) <= BALL_RAD)
+    //    controlSignal = 0;
+
+    //printf("Derivative: %0.2f, Integral: %0.2f, Prop: %0.2f\n",
+     //      derivative, integral, GetGainP()*error);
 
     return normalizeData(controlSignal);
 }
