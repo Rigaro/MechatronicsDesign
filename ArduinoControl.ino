@@ -1,11 +1,11 @@
 #include <Servo.h>
 
-#define xZero 65
-#define xMax 68
-#define xMin 62
-#define yZero 91
-#define yMax 93
-#define yMin 89
+#define xMin 42
+#define xZero 50
+#define xMax 58
+#define yMin 101
+#define yZero 107
+#define yMax 113
 
 Servo xServo, yServo;
 int tempAngle = 0, xAngle = xZero, yAngle = yZero;
@@ -30,7 +30,7 @@ void loop() {
     //Determine the angle received with flag and offset.
     if(xAngleFlag)
     {
-      //xAngle = xMax - tempAngle;
+      //xAngle = xMax - tempAngle; not used
       xAngle = xMin + tempAngle;     
       //xAngle = tempAngle;
     }
@@ -41,20 +41,22 @@ void loop() {
     }
   
     //Print test angle
+    Serial.print("x: ");
     Serial.println(xAngle);
+    Serial.print("y: ");
     Serial.println(yAngle);
   }
   
-  /*if(xAngle > xMax)
-    xAngle = xMax;
-  else if(xAngle < xMin)
-    xAngle = xMin;
+  //if(xAngle > xMax)
+  //  xAngle = xMax;
+  //else if(xAngle < xMin)
+  //  xAngle = xMin;
     
-  if(yAngle > yMax)
-    yAngle = yMax;
-  else if(yAngle < yMin)
-    yAngle = yMin;
-    */
+  //if(yAngle > yMax)
+  //  yAngle = yMax;
+  //else if(yAngle < yMin)
+  //  yAngle = yMin;
+    
   xServo.write(xAngle);
   yServo.write(yAngle);
 }

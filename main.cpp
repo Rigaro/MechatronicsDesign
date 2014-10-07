@@ -72,17 +72,19 @@ int MainProgram()
     int xAngle = BOARD_0_XANG, prevXAngle = xAngle;
     int yAngle = BOARD_0_YANG, prevYAngle = yAngle;
     //WITH CONTROLLER LIMIT 1000, X VALUEs
-    int xiNum = 69, xiDen = 3, xdNum = 39, xdDen = 24, xpNum = 40, xpDen = 36;
+    int xiNum = 27, xiDen = 3, xdNum = 77, xdDen = 15, xpNum = 38, xpDen = 45;
     //WITH CONTROLLER LIMIT 1000, Y VALUEs
-    int yiNum = 75, yiDen = 3, ydNum = 40, ydDen = 27, ypNum = 38, ypDen = 36;
+    int yiNum = 29, yiDen = 3, ydNum = 77, ydDen = 15, ypNum = 34, ypDen = 41;
+
+
     //WITH CONTROLLER LIMIT 100
     //int integralNum = 8, integralDen = 18, derivativeNum = 8, derivativeDen = 28, propNum = 6, propDen = 12;
     //WITH CONTROLLER LIMIT 1000, X VALUEs
-    //int integralNum = 34, integralDen = 7, derivativeNum = 18, derivativeDen = 5, propNum = 15, propDen = 5;
+    //int xiNum = 27, xiDen = 3, xdNum = 77, xdDen = 15, xpNum = 38, xpDen = 45;
     //WITH CONTROLLER LIMIT 1000, Y VALUEs
-    //int integralNum = 59, integralDen = 12, derivativeNum = 17, derivativeDen = 13, propNum = 24, propDen = 13;
+    //int yiNum = 29, yiDen = 3, ydNum = 77, ydDen = 15, ypNum = 34, ypDen = 41;
 
-    double timeStuck = 0;
+    double timeStuck = 0, timeAtPos = 0;
 
     Mat source, processed;
     vector<Vec3f> circles;
@@ -113,8 +115,8 @@ int MainProgram()
 
     ControllerPID xControl(0, 16, xpNum/xpDen, xiNum/xiDen, xdNum/xdDen);
     ControllerPID yControl(0, 12, ypNum/ypDen, yiNum/yiDen, ydNum/ydDen);
-    xControl.setMinimumPositionError(BALL_RAD);
-    yControl.setMinimumPositionError(BALL_RAD);
+    xControl.setMinimumPositionError(BALL_RAD/2);
+    yControl.setMinimumPositionError(BALL_RAD/2);
 
     /*
     To determine our sample frequency, we must determine the frame rate of the
@@ -140,20 +142,24 @@ int MainProgram()
 
 
     // setup our desired path
-    vector<Point> path;
+    vector<Vec4i> path;
 
-    //path.push_back(Point(384, 372)); //Before gate 1
-    path.push_back(Point(346, 364)); //Gate 1
-    //path.push_back(Point(298, 364)); //After gate 1
-    //path.push_back(Point(178, 386)); //Before gate 2
-    path.push_back(Point(148, 386));  //Gate 2
-    //path.push_back(Point(116, 382)); //After gate 2
-    path.push_back(Point(130, 280)); //Midpoint 1
-    path.push_back(Point(434, 172));  //Midpoint 2
-    //path.push_back(Point(376, 106));  //Before gate 3
-    path.push_back(Point(348, 106));  //Gate 3
-    //path.push_back(Point(320, 106));  //After gate 3
-    path.push_back(Point(172, 104));  //Hole
+    path.push_back(Vec4i(384, 372, 2*BALL_RAD, 2*BALL_RAD)); //Before gate 1
+    path.push_back(Vec4i(346, 364, BALL_RAD, BALL_RAD)); //Gate 1
+    path.push_back(Vec4i(298, 364, BALL_RAD, BALL_RAD)); //After gate 1
+    path.push_back(Vec4i(246, 372, 2*BALL_RAD, 2*BALL_RAD)); // Between gate 1 and 2
+    path.push_back(Vec4i(178, 386, BALL_RAD, BALL_RAD)); //Before gate 2
+    path.push_back(Vec4i(148, 386, BALL_RAD/2, BALL_RAD/2));  //Gate 2
+    path.push_back(Vec4i(116, 382, BALL_RAD, BALL_RAD)); //After gate 2
+    path.push_back(Vec4i(108, 317, BALL_RAD, BALL_RAD)); // After gate 2
+    path.push_back(Vec4i(130, 280, 3*BALL_RAD, 3*BALL_RAD)); //Midpoint 1
+    path.push_back(Vec4i(218, 220, 2*BALL_RAD, 2*BALL_RAD)); // Midpoint 2
+    path.push_back(Vec4i(300, 220, 3*BALL_RAD, 3*BALL_RAD));  //Midpoint 3
+    path.push_back(Vec4i(434, 172, 3*BALL_RAD, 3*BALL_RAD));  //Midpoint 4
+    path.push_back(Vec4i(376, 106, BALL_RAD, BALL_RAD));  //Before gate 3
+    path.push_back(Vec4i(348, 106, BALL_RAD/2, BALL_RAD/2));  //Gate 3
+    path.push_back(Vec4i(320, 106, BALL_RAD, BALL_RAD));  //After gate 3
+    path.push_back(Vec4i(172, 104, BALL_RAD/2, BALL_RAD/2));  //Hole
     int currPosition = 0;
 
 
@@ -169,6 +175,13 @@ int MainProgram()
         beforeCapTime = (double)getTickCount();
 
         bool bSuccess = cap.read(source);
+
+        for (int i = 0; i < (int)path.size(); i++)
+        {
+            Point p = Point(path[i][0], path[i][1]);
+
+            circle(source, p, 4, Scalar(255, 255,0), -1, 8, 0);
+        }
 
         currTime = (double)getTickCount();
 
@@ -192,14 +205,14 @@ int MainProgram()
         HoughCircles(processed, circles, CV_HOUGH_GRADIENT, 1, processed.rows/8, 
                      upperThres, centerThres, minRad, maxRad);
 
+        Vec4i newDesPos = path[currPosition];
+        Point newXY = Point(newDesPos[0], newDesPos[1]);
+        printf("Num pos: %d, curPos: %d,  New des position - x: %d, y: %d\n", path.size(), currPosition, newXY.x, newXY.y);
 
-        Point newPos = path[currPosition];
-        printf("Num pos: %d, curPos: %d,  New des position - x: %d, y: %d\n", path.size(), currPosition, newPos.x, newPos.y);
+        xControl.setDesiredPos_px(newXY.x);
+        yControl.setDesiredPos_px(newXY.y);
 
-        xControl.setDesiredPos_px(newPos.x);
-        yControl.setDesiredPos_px(newPos.y);
-
-        circle(source, newPos, 4, Scalar(255,0,0), -1, 8, 0);
+        circle(source, newXY, 4, Scalar(255,0,0), -1, 8, 0);
 
         ballOnBoard = circles.size() != 0;
 
@@ -233,19 +246,19 @@ int MainProgram()
             {
                 timeStuck += currTime - prevTime;
 
-                if (timeStuck/getTickFrequency() > 3)
+                if (timeStuck/getTickFrequency() > 4)
                 {
                     if (xAngle == xControl.GetOutputMax())
-                        xAngle = BOARD_0_XANG/2;
+                        xAngle = BOARD_0_XANG/4;
 
                     else
-                        xAngle = 1.5*BOARD_0_XANG;
+                        xAngle = 1.25*BOARD_0_XANG;
 
                     if (yAngle == yControl.GetOutputMax())
-                        yAngle = BOARD_0_YANG/2;
+                        yAngle = BOARD_0_YANG/4;
 
                     else
-                        yAngle = 1.5*BOARD_0_YANG;
+                        yAngle = 1.25*BOARD_0_YANG;
 
                     timeStuck = 0;
                 }
@@ -258,23 +271,26 @@ int MainProgram()
             // to go to the next point starting with the next frame
             if (xControl.atDesiredPosition() && yControl.atDesiredPosition())
             {
-                currPosition++;
+                timeAtPos += currTime - prevTime;
 
-                if(currPosition == 2 || currPosition == 3) {
-                    xControl.setMinimumPositionError(2*BALL_RAD);
-                    yControl.setMinimumPositionError(2*BALL_RAD);
-                }
-                else {
-                    xControl.setMinimumPositionError(BALL_RAD);
-                    yControl.setMinimumPositionError(BALL_RAD);
-                }
-
-                if (currPosition >= (int)path.size())
+                if (timeAtPos/getTickFrequency() > 0)
                 {
-                    cout << "AT END POINT. Restarting" << endl;
-                    currPosition = 0;
+                    currPosition++;
+
+                    xControl.setMinimumPositionError(newDesPos[2]);
+                    yControl.setMinimumPositionError(newDesPos[3]);
+
+                    if (currPosition >= (int)path.size())
+                    {
+                        cout << "AT END POINT. Restarting" << endl;
+                        currPosition = 0;
+                    }
+
+                    timeAtPos = 0;
                 }
             }
+            else
+                timeAtPos = 0;
         }
         else if (framesWithoutBall == 3)
         {
