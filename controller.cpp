@@ -9,6 +9,8 @@
  */
 #include "controller.h"
 
+#include <stdlib.h>
+
 //Default constructor
 Controller::Controller()
 {
@@ -20,6 +22,8 @@ Controller::Controller()
     gainP = 0.0;
     outputMin_deg = 0;
     outputMax_deg = 0;
+
+    minimumPositionError = 0;
 }
 
 //Initializes controller limits and gain.
@@ -34,7 +38,7 @@ Controller::Controller(int outputMin_deg, int outputMax_deg, double gainP) : Con
 }
 
 //Computes the error between the desired and current position.
-void Controller::ComputeError()
+void Controller::computeError()
 {
     error = desPos_px - curPos_px;
 }
@@ -43,7 +47,7 @@ void Controller::ComputeError()
 //If the correction is greater or lower than the controller's limits,
 //the value is set to that of the limit.
 //@return controller proportional correction as integer.
-double Controller::ProportionalCorrection()
+double Controller::proportionalCorrection()
 {
     double correctionP = gainP * error;
     return correctionP;
@@ -52,39 +56,31 @@ double Controller::ProportionalCorrection()
 //Performs proportional position control that sets the desired position.
 //The output is normalized to work within the application's requirements.
 //@return normalized control signal.
-int Controller::PositionControl(int desPos_px, int curPos_px)
+int Controller::positionControl(int desPos_px, int curPos_px)
 {
-    SetDesiredPos_px(desPos_px);
+    setDesiredPos_px(desPos_px);
     
-    return PositionControl(curPos_px);
+    return positionControl(curPos_px);
 }
 
 //Performs proportional position control.
 //The output is normalized to work within the application's requirements.
 //@return normalized control signal.
-int Controller::PositionControl(int curPos_px)
+int Controller::positionControl(int curPos_px)
 {
-    SetCurrentPos_px(curPos_px);
-    ComputeError();
-    double controlSignal = ProportionalCorrection();
+    setCurrentPos_px(curPos_px);
+    computeError();
+    double controlSignal = proportionalCorrection();
     
-    controlSignal = ClampSaturation(controlSignal);
+    controlSignal = clampSaturation(controlSignal);
 
-    return NormalizeData(controlSignal);
+    return normalizeData(controlSignal);
 }
-
-/*
-void transformPos(int posPixel)
-{
-    SetPosPast(posNew);
-    SetPosNew(posPixel*TSCALAR+TCONST);
-}
-*/
 
 //Normalizes control data to the output range.
 //@param data to be normalized.
 //@return normalized control data.
-int Controller::NormalizeData(double data)
+int Controller::normalizeData(double data)
 {
     return (int)((data - LOWERLIMIT) * \
         (outputMax_deg - outputMin_deg)/(UPPERLIMIT - LOWERLIMIT));
@@ -97,7 +93,7 @@ that is out-of-bounds.
 @param output Signal to clamp
 @return Clamped signal if out-of-bounds, or given signal
 */
-double Controller::ClampSaturation(double output)
+double Controller::clampSaturation(double output)
 {
     if (output > UPPERLIMIT)
         output = UPPERLIMIT;
@@ -107,19 +103,34 @@ double Controller::ClampSaturation(double output)
     return output;
 }
 
+/**
+ * Let's us know if this axis is at the desired position
+ *
+ * @return bool Whether we are within the minimum position error or not
+ */
+bool Controller::atDesiredPosition()
+{
+    return abs(error) <= 2*minimumPositionError;
+}
+
 //Setters
-void Controller::SetDesiredPos_px(int desPos_px)
+void Controller::setMinimumPositionError(double minimumPositionError)
+{
+    this->minimumPositionError = minimumPositionError;
+}
+
+void Controller::setDesiredPos_px(int desPos_px)
 {
     this->desPos_px = desPos_px;
 }
 
-void Controller::SetDesiredPos_mm(double desPos_mm)
+void Controller::setDesiredPos_mm(double desPos_mm)
 {
     this->desPos_mm = desPos_mm;
 }
 
 
-void Controller::SetCurrentPos_px(int curPos_px)
+void Controller::setCurrentPos_px(int curPos_px)
 {
     this->curPos_px = curPos_px;
 }
@@ -145,6 +156,11 @@ void Controller::SetOutputMin(int outputMin_deg)
 }
 
 //Getters
+double Controller::getMinumumPositionError()
+{
+    return this->minimumPositionError;
+}
+
 double Controller::GetGainP()
 {
     return gainP;
@@ -184,3 +200,4 @@ int Controller::GetCurrentError()
 {
     return error;
 }
+

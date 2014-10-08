@@ -9,12 +9,9 @@ class TiltController : public Controller
         TiltController();
         TiltController(int, int, int, double, double, double);
 
-        int PositionControl(int);
-        int PositionControl(int, int);
-        int PositionControl(int, int, double);
-
-        void setMinimumPositionError(double);
-        double getMinumumPositionError();
+        int positionControl(int);
+        int positionControl(int, int);
+        int positionControl(int, int, double);
 
         void setTiltDelay(double tiltDelay);
         double getTiltDelay();
@@ -29,7 +26,7 @@ class TiltController : public Controller
 
         int outputZero;
 
-        double minimumPositionError;
+
 
         void initialize();
         int GetTilt();

@@ -9,8 +9,8 @@ class FSController: public Controller
         FSController();
         FSController(int, int, double, double);
 
-        int PositionControl(int, int, double);
-        int PositionControl(int, double);
+        int positionControl(int, int, double);
+        int positionControl(int, double);
     
     protected:
         double observeDerivativeState();

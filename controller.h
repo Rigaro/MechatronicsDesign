@@ -1,21 +1,21 @@
 #ifndef CONTROLLER_H
 #define CONTROLLER_H
 
-#define UPPERLIMIT 100
-#define LOWERLIMIT -100
+#define UPPERLIMIT 1000
+#define LOWERLIMIT -1000
 
-#define BALL_RAD 7
+#define BALL_RAD 12
 
 class Controller
 {
     public:
         Controller();
         Controller(int, int, double);
-        int PositionControl(int, int);
-        int PositionControl(int);
-        void SetDesiredPos_px(int);
-        void SetDesiredPos_mm(double);
-        void SetCurrentPos_px(int);
+        int positionControl(int, int);
+        int positionControl(int);
+        void setDesiredPos_px(int);
+        void setDesiredPos_mm(double);
+        void setCurrentPos_px(int);
         void SetCurrentPos_mm(double);
         void SetGainP(double);
         void SetOutputMax(int);
@@ -28,6 +28,12 @@ class Controller
         int GetCurrentPos_px();
         double GetCurrentPos_mm();
         int GetCurrentError();
+
+        bool atDesiredPosition();
+
+        void setMinimumPositionError(double);
+        double getMinumumPositionError();
+
     protected:
         int error;
    
@@ -36,10 +42,13 @@ class Controller
         int curPos_px;
         double curPos_mm;
 
-        void ComputeError();
-        double ProportionalCorrection();
-        int NormalizeData(double);
-        double ClampSaturation(double);
+        double minimumPositionError;
+
+
+        void computeError();
+        double proportionalCorrection();
+        int normalizeData(double);
+        double clampSaturation(double);
     private:
         double gainP;
         int outputMin_deg;

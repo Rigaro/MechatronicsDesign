@@ -12,6 +12,7 @@
 #include "opencv/cv.h"
 #include <iostream>
 #include <stdio.h>
+#include <vector>
 
 #ifdef UNIX
 #include <unistd.h>
@@ -23,7 +24,7 @@
 
 #define INFINITE_LOOP true
 #define BOARD_0_XANG 8
-#define BOARD_0_YANG 8
+#define BOARD_0_YANG 6
 
 #define CAM_INDEX 2
 
@@ -54,8 +55,8 @@ double getAverageFPS()
 
     double avgFps = frameCount / ((currTime - startTime) / getTickFrequency());
 
-    if (avgFps > FPS_MAX)
-        avgFps = FPS_MAX;
+    //if (avgFps > FPS_MAX)
+    //    avgFps = FPS_MAX;
 
     return avgFps;
 }
@@ -63,46 +64,60 @@ double getAverageFPS()
 int MainProgram()
 {
     bool ballOnBoard = false;
+    int framesWithoutBall = 0;
     int upperThres = 10;
     int centerThres = 5;
-    int xPosBall = 0, yPosBall = 0, radius = 0;
+    int minRad = 12, maxRad = 15;
+    int xPosBall = 0, yPosBall = 0, prevXPos = 0, prevYPos = 0, radius = 0;
     int xAngle = BOARD_0_XANG, prevXAngle = xAngle;
     int yAngle = BOARD_0_YANG, prevYAngle = yAngle;
-    //int integralNum = 1, integralDen = 100, derivativeNum = 0, derivativeDen = 5, propNum = 30, propDen = 1;
+    //WITH CONTROLLER LIMIT 1000, X VALUEs
+    int xiNum = 27, xiDen = 3, xdNum = 77, xdDen = 15, xpNum = 38, xpDen = 45;
+    //WITH CONTROLLER LIMIT 1000, Y VALUEs
+    int yiNum = 29, yiDen = 3, ydNum = 77, ydDen = 15, ypNum = 34, ypDen = 41;
+
+
+    //WITH CONTROLLER LIMIT 100
+    //int integralNum = 8, integralDen = 18, derivativeNum = 8, derivativeDen = 28, propNum = 6, propDen = 12;
+    //WITH CONTROLLER LIMIT 1000, X VALUEs
+    //int xiNum = 27, xiDen = 3, xdNum = 77, xdDen = 15, xpNum = 38, xpDen = 45;
+    //WITH CONTROLLER LIMIT 1000, Y VALUEs
+    //int yiNum = 29, yiDen = 3, ydNum = 77, ydDen = 15, ypNum = 34, ypDen = 41;
+
+    double timeStuck = 0, timeAtPos = 0;
 
     Mat source, processed;
     vector<Vec3f> circles;
     //Get video
     VideoCapture cap(CAM_INDEX);
 
-    namedWindow("Original", CV_WINDOW_AUTOSIZE);
+    namedWindow("Trackbars", CV_WINDOW_AUTOSIZE);
 
+    /*
     //Trackbar for circle detection tunning.
-    //cvCreateTrackbar("Upper","Original",&upperThres,200);
-    //cvCreateTrackbar("Center","Original",&centerThres,200);
-    
-    /*cvCreateTrackbar("integralNum","Original",&integralNum,9);
-    cvCreateTrackbar("integralDen","Original",&integralDen,1000);
-    cvCreateTrackbar("derivativeNum","Original",&derivativeNum,1000);
-    cvCreateTrackbar("derivativeDen","Original",&derivativeDen,100);
-    cvCreateTrackbar("propNum","Original",&propNum,1000);
-    cvCreateTrackbar("propDen","Original",&propDen,100);
-
-    ControllerPID xControl(0, 6, propNum/propDen, integralNum/integralDen, derivativeNum/derivativeDen);
-    ControllerPID yControl(0, 6, propNum/propDen, integralNum/integralDen, derivativeNum/derivativeDen);
+    cvCreateTrackbar("Upper","Original",&upperThres,200);
+    cvCreateTrackbar("Center","Original",&centerThres,200);
+    cvCreateTrackbar("Min Rad","Original",&minRad,30);
+    cvCreateTrackbar("Max Rad","Original",&maxRad,50);
     */
+    cvCreateTrackbar("xiNum","Trackbars",&xiNum,100);
+    cvCreateTrackbar("xiDen","Trackbars",&xiDen,100);
+    cvCreateTrackbar("xdNum","Trackbars",&xdNum,100);
+    cvCreateTrackbar("xdDen","Trackbars",&xdDen,100);
+    cvCreateTrackbar("xpNum","Trackbars",&xpNum,100);
+    cvCreateTrackbar("xpDen","Trackbars",&xpDen,100);
+    cvCreateTrackbar("yiNum","Trackbars",&yiNum,100);
+    cvCreateTrackbar("yiDen","Trackbars",&yiDen,100);
+    cvCreateTrackbar("ydNum","Trackbars",&ydNum,100);
+    cvCreateTrackbar("ydDen","Trackbars",&ydDen,100);
+    cvCreateTrackbar("ypNum","Trackbars",&ypNum,100);
+    cvCreateTrackbar("ypDen","Trackbars",&ypDen,100);
 
-    // Tilt-based controller
-    TiltController xControl = TiltController(0, 2, BOARD_0_XANG, 0.2, 0.05, BALL_RAD);
-    TiltController yControl = TiltController(0, 2, BOARD_0_YANG, 0.2, 0.05, BALL_RAD);
+    ControllerPID xControl(0, 16, xpNum/xpDen, xiNum/xiDen, xdNum/xdDen);
+    ControllerPID yControl(0, 12, ypNum/ypDen, yiNum/yiDen, ydNum/ydDen);
+    xControl.setMinimumPositionError(BALL_RAD/2);
+    yControl.setMinimumPositionError(BALL_RAD/2);
 
-    // Dual axis control
-    DualAxisController control = DualAxisController(0, 2, BOARD_0_XANG, 0.2, 0.05, BALL_RAD);
-    control.setXYDesiredPosition_px(368, 356);
-
-    xControl.SetDesiredPos_px(368);
-    yControl.SetDesiredPos_px(356);
-    
     /*
     To determine our sample frequency, we must determine the frame rate of the
     camera, as this is the frequency at which we receive updates.
@@ -125,19 +140,48 @@ int MainProgram()
 
     averageFPS = getAverageFPS(); // initialize
 
+
+    // setup our desired path
+    vector<Vec4i> path;
+
+    path.push_back(Vec4i(384, 372, 2*BALL_RAD, 2*BALL_RAD)); //Before gate 1
+    path.push_back(Vec4i(346, 364, BALL_RAD, BALL_RAD)); //Gate 1
+    path.push_back(Vec4i(298, 364, BALL_RAD, BALL_RAD)); //After gate 1
+    path.push_back(Vec4i(246, 372, 2*BALL_RAD, 2*BALL_RAD)); // Between gate 1 and 2
+    path.push_back(Vec4i(178, 386, BALL_RAD, BALL_RAD)); //Before gate 2
+    path.push_back(Vec4i(148, 386, BALL_RAD/2, BALL_RAD/2));  //Gate 2
+    path.push_back(Vec4i(116, 382, BALL_RAD, BALL_RAD)); //After gate 2
+    path.push_back(Vec4i(108, 317, BALL_RAD, BALL_RAD)); // After gate 2
+    path.push_back(Vec4i(130, 280, 3*BALL_RAD, 3*BALL_RAD)); //Midpoint 1
+    path.push_back(Vec4i(218, 220, 2*BALL_RAD, 2*BALL_RAD)); // Midpoint 2
+    path.push_back(Vec4i(300, 220, 3*BALL_RAD, 3*BALL_RAD));  //Midpoint 3
+    path.push_back(Vec4i(434, 172, 3*BALL_RAD, 3*BALL_RAD));  //Midpoint 4
+    path.push_back(Vec4i(376, 106, BALL_RAD, BALL_RAD));  //Before gate 3
+    path.push_back(Vec4i(348, 106, BALL_RAD/2, BALL_RAD/2));  //Gate 3
+    path.push_back(Vec4i(320, 106, BALL_RAD, BALL_RAD));  //After gate 3
+    path.push_back(Vec4i(172, 104, BALL_RAD/2, BALL_RAD/2));  //Hole
+    int currPosition = 0;
+
+
     while (INFINITE_LOOP)
     {
-        /*xControl.setGainI(1.0*integralNum/integralDen);
-        xControl.setGainD(1.0*derivativeNum/derivativeDen);
-        xControl.SetGainP(1.0*propNum/propDen);
-        yControl.setGainI(1.0*integralNum/integralDen);
-        yControl.setGainD(1.0*derivativeNum/derivativeDen);
-        yControl.SetGainP(1.0*propNum/propDen);
-        */
+        xControl.setGainI(1.0*xiNum/xiDen);
+        xControl.setGainD(1.0*xdNum/xdDen);
+        xControl.SetGainP(1.0*xpNum/xpDen);
+        yControl.setGainI(1.0*yiNum/yiDen);
+        yControl.setGainD(1.0*ydNum/ydDen);
+        yControl.SetGainP(1.0*ypNum/ypDen);
 
         beforeCapTime = (double)getTickCount();
 
         bool bSuccess = cap.read(source);
+
+        for (int i = 0; i < (int)path.size(); i++)
+        {
+            Point p = Point(path[i][0], path[i][1]);
+
+            circle(source, p, 4, Scalar(255, 255,0), -1, 8, 0);
+        }
 
         currTime = (double)getTickCount();
 
@@ -146,10 +190,8 @@ int MainProgram()
         averageFPS = getAverageFPS();
         frameDelta = (currTime - prevTime) / getTickFrequency();
 
-        printf("Frame time: %0.4f, FPS: %0.3f, Average FPS: %0.4f, Frame delta: %0.2f\n", 
+        printf("Frame time: %0.4f, FPS: %0.3f, Average FPS: %0.4f, Frame delta: %0.2f\n",
             frameTime, 1/frameTime, averageFPS, frameDelta);
-
-        prevTime = currTime;
 
         if (!bSuccess)
         {
@@ -161,12 +203,25 @@ int MainProgram()
 
         //Get circles from processed image.
         HoughCircles(processed, circles, CV_HOUGH_GRADIENT, 1, processed.rows/8, 
-                     upperThres, centerThres, 15, 25);
+                     upperThres, centerThres, minRad, maxRad);
+
+        Vec4i newDesPos = path[currPosition];
+        Point newXY = Point(newDesPos[0], newDesPos[1]);
+        printf("Num pos: %d, curPos: %d,  New des position - x: %d, y: %d\n", path.size(), currPosition, newXY.x, newXY.y);
+
+        xControl.setDesiredPos_px(newXY.x);
+        yControl.setDesiredPos_px(newXY.y);
+
+        circle(source, newXY, 4, Scalar(255,0,0), -1, 8, 0);
 
         ballOnBoard = circles.size() != 0;
 
         if (ballOnBoard) 
         {
+            framesWithoutBall = 0;
+
+            prevXPos = xPosBall;
+            prevYPos = yPosBall;
             source = GetBallPosition(&xPosBall, &yPosBall, &radius, circles, 
                                      source);
             /* 
@@ -178,39 +233,80 @@ int MainProgram()
             prevXAngle = xAngle;
             prevYAngle = yAngle;
 
-            // SINGLE AXIS CONTROLLERS (1 control per axis)
-            xControl.setTiltActionTime(frameDelta - 0.01);
-            yControl.setTiltActionTime(frameDelta - 0.01);
+            xAngle = xControl.positionControl(xPosBall,frameDelta);
+            yAngle = yControl.positionControl(yPosBall,frameDelta);
 
-            xAngle = xControl.PositionControl(xPosBall);
-            /* Prevent Y from changing if X is not at the zero position, to
-            'emulate' dual axis control, this should prevent the ball
-            shooting off in a diagonal if they both change at once. This
-            only happens if Y is also at the zero position (or it'll be
-            stuck on a angle!) */
-            if (xAngle != BOARD_0_XANG && yAngle == BOARD_0_YANG)
-                yAngle = yControl.PositionControl(yPosBall);
 
-            // DUAL AXIS CONTROLLER (controls both axis, moves one at a time).
-            // Controls regardless of whether we found a ball or not.
-            control.setTiltActionTime(frameDelta - 0.01);
+            //perform a check to see if the ball has been stuckj in a certain position
+            //for longer than 3 seconds. if so, jerk it so that it moves
 
-            if (control.AtDesiredPosition())
-                // let's go to a new position!!
-                control.setXYDesiredPosition_px(300, 300);
+            //printf("Time stuck: %0.2f\n", timeStuck/getTickFrequency());
+            if (abs(prevXPos - xPosBall) <= xControl.getMinumumPositionError() &&
+                    abs(prevYPos - yPosBall) <= yControl.getMinumumPositionError())
+            {
+                timeStuck += currTime - prevTime;
 
-            Point xyAngle = control.AngleControl(xPosBall, yPosBall);
-            //xAngle = xyAngle.x;
-            //yAngle = xyAngle.y;
+                if (timeStuck/getTickFrequency() > 4)
+                {
+                    if (xAngle == xControl.GetOutputMax())
+                        xAngle = BOARD_0_XANG/4;
+
+                    else
+                        xAngle = 1.25*BOARD_0_XANG;
+
+                    if (yAngle == yControl.GetOutputMax())
+                        yAngle = BOARD_0_YANG/4;
+
+                    else
+                        yAngle = 1.25*BOARD_0_YANG;
+
+                    timeStuck = 0;
+                }
+
+            }
+            else
+                timeStuck = 0;
+
+            // If we're at the desired position, increment the path counter so we try
+            // to go to the next point starting with the next frame
+            if (xControl.atDesiredPosition() && yControl.atDesiredPosition())
+            {
+                timeAtPos += currTime - prevTime;
+
+                if (timeAtPos/getTickFrequency() > 0)
+                {
+                    currPosition++;
+
+                    xControl.setMinimumPositionError(newDesPos[2]);
+                    yControl.setMinimumPositionError(newDesPos[3]);
+
+                    if (currPosition >= (int)path.size())
+                    {
+                        cout << "AT END POINT. Restarting" << endl;
+                        currPosition = 0;
+                    }
+
+                    timeAtPos = 0;
+                }
+            }
+            else
+                timeAtPos = 0;
+        }
+        else if (framesWithoutBall == 3)
+        {
+            cout << 'reversing angle' << endl;
+            int xAngleDiff = BOARD_0_XANG - xAngle;
+            int yAngleDiff = BOARD_0_YANG - yAngle;
+            xAngle = BOARD_0_XANG;
+            yAngle = BOARD_0_YANG;
+            framesWithoutBall = 0;
         }
         else
         {
-            // If using tilt control, we want the board to be flat if we don't
-            // detect the ball.
-            xAngle = BOARD_0_XANG;
-            yAngle = BOARD_0_YANG;
+            // Count how many frames pass without detecting the ball
+            framesWithoutBall++;
         }
-
+        printf("Frames passed without detecting the balL: %d\n", framesWithoutBall);
         //Send x data
         SendSerial(xAngle, 'x', PORT_0);
         //Send y data
@@ -222,17 +318,18 @@ int MainProgram()
         printf("C Y ang: %d, D Y ang: %d, y pos: %d, y error: %d\n", yAngle,
             prevYAngle, yPosBall, yControl.GetCurrentError());
 
+
         imshow("Original", source);
         imshow("Thresh", processed);
-        
-        //usleep(100000);
+
+        prevTime = currTime;
 
         //Stop process when esc is pressed.
         if(waitKey(30) == 27)
         {
+            cout << "ESC PRESSED" << endl;
             break;
         }
-        //break;
     }
 
     return 0;
@@ -243,7 +340,7 @@ int MainProgram()
 int SerialTest()
 {
     int xAngle = 65;
-    int yAngle = 98;
+    int yAngle = 91;
 
     Mat src;
 
@@ -272,9 +369,9 @@ int SerialTest()
         }
 
         //Send x data
-        SendSerial(xAngle, 'x', PORT_1);
+        SendSerial(xAngle, 'x', PORT_0);
         //Send y data
-        SendSerial(yAngle, 'y', PORT_1);
+        SendSerial(yAngle, 'y', PORT_0);
 
         imshow("Test", src);
 

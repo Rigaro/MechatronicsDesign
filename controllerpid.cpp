@@ -1,6 +1,7 @@
 #include "controllerpid.h"
 #include <iostream>
 #include <stdio.h>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -26,7 +27,7 @@ ControllerPID::ControllerPID(int outputMin_deg, int outputMax_deg,
     derivative = 0;
 }
 
-void ControllerPID::ComputeError()
+void ControllerPID::computeError()
 {
     previousError = error;
     error = desPos_px - curPos_px;
@@ -36,9 +37,13 @@ void ControllerPID::ComputeError()
 Performs the integral correction for the current position.
 @return controller proportional correction as integer.
 */
-double ControllerPID::IntegralCorrection(double delta)
+double ControllerPID::integralCorrection(double delta)
 {
     integral = integral + gainI*error*delta;
+    if(integral > UPPERLIMIT)
+        integral = UPPERLIMIT;
+    else if(integral < LOWERLIMIT)
+        integral = LOWERLIMIT;
 
     return integral;
 }
@@ -47,12 +52,12 @@ double ControllerPID::IntegralCorrection(double delta)
 Performs the derivative correction for the current position.
 @return controller proportional correction as integer.
 */
-double ControllerPID::DerivativeCorrection(double delta)
+double ControllerPID::derivativeCorrection(double delta)
 {
     double errorDiff = error - previousError;
     double absErrorDiff = abs(errorDiff);
 
-    if (absErrorDiff > BALL_RAD)
+    if (absErrorDiff > minimumPositionError)
         derivative = gainD * errorDiff / delta;
     else
         derivative = 0;
@@ -64,10 +69,11 @@ double ControllerPID::DerivativeCorrection(double delta)
 Performs PID position control, uses sampling frequency for frame delta
 calculation
 */
-int ControllerPID::PositionControl(int desPox_px, int curPos_px)
+int ControllerPID::positionControl(int desPox_px, int curPos_px)
 {
+    setDesiredPos_px(desPox_px);
     double frameDelta = 1 / samplingFreq;
-    return PositionControl(desPos_px, frameDelta);
+    return positionControl(curPos_px, frameDelta);
 }
 
 /**
@@ -75,11 +81,11 @@ Performs PID position control that sets the desired position.
 The output is normalized to work within the application's requirements.
 @return normalized control signal.
 */
-int ControllerPID::PositionControl(int desPos_px, int curPos_px, double frameDelta)
+int ControllerPID::positionControl(int desPos_px, int curPos_px, double frameDelta)
 {
-    SetDesiredPos_px(desPos_px);
+    setDesiredPos_px(desPos_px);
     
-    return PositionControl(curPos_px, frameDelta);
+    return positionControl(curPos_px, frameDelta);
 }
 
 /**
@@ -87,20 +93,23 @@ Performs PID position control.
 The output is normalized to work within the application's requirements.
 @return normalized control signal.
 */
-int ControllerPID::PositionControl(int curPos_px, double frameDelta)
+int ControllerPID::positionControl(int curPos_px, double frameDelta)
 {
-    SetCurrentPos_px(curPos_px);
-    ComputeError();
+    setCurrentPos_px(curPos_px);
+    computeError();
 
-    double controlSignal = ProportionalCorrection() + \
-        IntegralCorrection(frameDelta) + DerivativeCorrection(frameDelta);
+    double controlSignal = proportionalCorrection() + \
+        integralCorrection(frameDelta) + derivativeCorrection(frameDelta);
 
-    controlSignal = ClampSaturation(controlSignal);
+    controlSignal = clampSaturation(controlSignal);
 
-    printf("Derivative: %0.2f, Integral: %0.2f, Prop: %0.2f\n",
-           derivative, integral, GetGainP()*error);
+    //if(abs(error) <= BALL_RAD)
+    //    controlSignal = 0;
 
-    return NormalizeData(controlSignal);
+    //printf("Derivative: %0.2f, Integral: %0.2f, Prop: %0.2f\n",
+     //      derivative, integral, GetGainP()*error);
+
+    return normalizeData(controlSignal);
 }
 
 void ControllerPID::setGainI(double gainI)

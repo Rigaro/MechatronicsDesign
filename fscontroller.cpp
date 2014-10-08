@@ -27,14 +27,14 @@ FSController::FSController(int outputMin_deg, int outputMax_deg,
     previousObservedStateValue = 0;
 }
 
-int FSController::PositionControl(int desPos_px, int currPos_px, double frameDelta)
+int FSController::positionControl(int desPos_px, int currPos_px, double frameDelta)
 {
-    SetDesiredPos_px(desPos_px);
+    setDesiredPos_px(desPos_px);
 
-    return PositionControl(currPos_px, frameDelta);
+    return positionControl(currPos_px, frameDelta);
 }
 
-int FSController::PositionControl(int currPos_px, double frameDelta)
+int FSController::positionControl(int currPos_px, double frameDelta)
 {
     return 0;
 }

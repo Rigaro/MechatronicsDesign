@@ -8,7 +8,9 @@ SOURCES += main.cpp \
     Camera.cpp \
     controller.cpp \
     fscontroller.cpp \
-    controllerpid.cpp
+    controllerpid.cpp \
+    dualaxiscontroller.cpp \
+    tiltcontroller.cpp
 
 unix: CONFIG += link_pkgconfig
 unix: PKGCONFIG += opencv
@@ -18,4 +20,6 @@ HEADERS += \
     Camera.h \
     controller.h \
     fscontroller.h \
-    controllerpid.h
+    controllerpid.h \
+    dualaxiscontroller.h \
+    tiltcontroller.h
