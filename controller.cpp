@@ -110,7 +110,7 @@ double Controller::clampSaturation(double output)
  */
 bool Controller::atDesiredPosition()
 {
-    return abs(error) <= 2*minimumPositionError;
+    return abs(error) <= minimumPositionError;
 }
 
 //Setters

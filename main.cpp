@@ -104,7 +104,7 @@ int MainProgram()
     cvCreateTrackbar("xiDen","Trackbars",&xiDen,100);
     cvCreateTrackbar("xdNum","Trackbars",&xdNum,100);
     cvCreateTrackbar("xdDen","Trackbars",&xdDen,100);
-    cvCreateTrackbar("xpNum","Trackbars",&xpNum,100);
+    cvCreateTrackbar("xpNum","Trackbars",&xpNum,1000);
     cvCreateTrackbar("xpDen","Trackbars",&xpDen,100);
     cvCreateTrackbar("yiNum","Trackbars",&yiNum,100);
     cvCreateTrackbar("yiDen","Trackbars",&yiDen,100);
@@ -183,8 +183,11 @@ int MainProgram()
 
             circle(source, p, 4, Scalar(255, 255,0), -1, 8, 0);
 
-            Point vertex1 = Point(p.x - tmp[3], p.y - tmp[4]);
-            Point vertex2 = Point(p.x + tmp[3], p.y + tmp[4]);
+            Point vertex1 = Point(p.x - tmp[2], p.y - tmp[3]);
+            Point vertex2 = Point(p.x + tmp[2], p.y + tmp[3]);
+
+            //circle(source, vertex1, 4, Scalar(0, 255, 0), -1, 8, 0);
+            //circle(source, vertex2, 4, Scalar(0, 255, 0), -1, 8, 0);
             rectangle(source, vertex1, vertex2, Scalar(255, 255, 0), 1, 8, 0);
         }
 
@@ -195,7 +198,7 @@ int MainProgram()
         averageFPS = getAverageFPS();
         frameDelta = (currTime - prevTime) / getTickFrequency();
 
-        printf("Frame time: %0.4f, FPS: %0.3f, Average FPS: %0.4f, Frame delta: %0.2f\n",
+        printf("Frame time: %0.4f, FPS: %0.3f, Average FPS: %0.4f, Frame delta: %0.3f\n",
             frameTime, 1/frameTime, averageFPS, frameDelta);
 
         if (!bSuccess)
@@ -297,7 +300,7 @@ int MainProgram()
             else
                 timeAtPos = 0;
         }
-        else if (framesWithoutBall == 3)
+        else if (framesWithoutBall == -1)
         {
             int xAngleDiff = BOARD_0_XANG - xAngle;
             int yAngleDiff = BOARD_0_YANG - yAngle;
