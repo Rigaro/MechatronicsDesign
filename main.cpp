@@ -178,9 +178,14 @@ int MainProgram()
 
         for (int i = 0; i < (int)path.size(); i++)
         {
-            Point p = Point(path[i][0], path[i][1]);
+            Vec4i tmp = path[i];
+            Point p = Point(tmp[0], tmp[1]);
 
             circle(source, p, 4, Scalar(255, 255,0), -1, 8, 0);
+
+            Point vertex1 = Point(p.x - tmp[3], p.y - tmp[4]);
+            Point vertex2 = Point(p.x + tmp[3], p.y + tmp[4]);
+            rectangle(source, vertex1, vertex2, Scalar(255, 255, 0), 1, 8, 0);
         }
 
         currTime = (double)getTickCount();
@@ -294,7 +299,6 @@ int MainProgram()
         }
         else if (framesWithoutBall == 3)
         {
-            cout << 'reversing angle' << endl;
             int xAngleDiff = BOARD_0_XANG - xAngle;
             int yAngleDiff = BOARD_0_YANG - yAngle;
             xAngle = BOARD_0_XANG;

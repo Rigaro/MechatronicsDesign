@@ -82,7 +82,7 @@ int TiltController::positionControl(int curPos_px)
         controlSignal = (double)GetTilt();
     }
 
-    return clampSaturation(controlSignal);
+    return (int)clampSaturation(controlSignal);
 }
 
 /**
