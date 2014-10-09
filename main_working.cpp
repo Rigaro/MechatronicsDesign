@@ -14,7 +14,6 @@
 #include <stdio.h>
 #include <vector>
 #include <stdlib.h>
-#include <sstream>
 
 #ifdef UNIX
 #include <unistd.h>
@@ -154,18 +153,16 @@ int MainProgram()
     path.push_back(Vec4i(260, 372, 2.5*BALL_RAD, 2.5*BALL_RAD)); // Between gate 1 and 2
     path.push_back(Vec4i(178, 386, 2.5*BALL_RAD, 2.5*BALL_RAD)); //Before gate 2
     path.push_back(Vec4i(148, 386, BALL_RAD/2, 2*BALL_RAD));  //Gate 2
-    path.push_back(Vec4i(126, 386, 2.5*BALL_RAD, 2.5*BALL_RAD)); //After gate 2
+    path.push_back(Vec4i(116, 386, 2.5*BALL_RAD, 2.5*BALL_RAD)); //After gate 2
     path.push_back(Vec4i(218, 300, 3.5*BALL_RAD, 3.5*BALL_RAD)); // Midpoint 1
     path.push_back(Vec4i(250, 260, 3.5*BALL_RAD, 3.5*BALL_RAD));  //Midpoint 2
     path.push_back(Vec4i(300, 220, 3.5*BALL_RAD, 3.5*BALL_RAD));  //Midpoint 3
-    path.push_back(Vec4i(300, 200, 3.5*BALL_RAD, 3.5*BALL_RAD));  //Midpoint 4
-    path.push_back(Vec4i(300, 172, 3.5*BALL_RAD, 3.5*BALL_RAD));  //Midpoint 5
-    path.push_back(Vec4i(300, 132, 2*BALL_RAD, 2*BALL_RAD));  //Midpoint 6
-    //path.push_back(Vec4i(300, 172, 2*BALL_RAD, 2*BALL_RAD));  //Midpoint 7
-    path.push_back(Vec4i(320, 106, 2.5*BALL_RAD, 2.5*BALL_RAD));  //After gate 3
-    path.push_back(Vec4i(348, 106, BALL_RAD/2, 2*BALL_RAD));  //Gate 3
-    path.push_back(Vec4i(358, 106, BALL_RAD/2, 2*BALL_RAD));  //Gate 3
+    path.push_back(Vec4i(350, 200, 3.5*BALL_RAD, 3.5*BALL_RAD));  //Midpoint 4
+    path.push_back(Vec4i(400, 172, 3.5*BALL_RAD, 3.5*BALL_RAD));  //Midpoint 5
     path.push_back(Vec4i(376, 106, 2.5*BALL_RAD, 2.5*BALL_RAD));  //Before gate 3
+    path.push_back(Vec4i(358, 106, BALL_RAD/2, 2*BALL_RAD));  //Gate 3
+    path.push_back(Vec4i(348, 106, BALL_RAD/2, 2*BALL_RAD));  //Gate 3
+    path.push_back(Vec4i(320, 106, 2.5*BALL_RAD, 2.5*BALL_RAD));  //After gate 3
     path.push_back(Vec4i(172, 108, BALL_RAD/2, BALL_RAD/2));  //Hole
     int currPosition = 0;
 
@@ -206,8 +203,8 @@ int MainProgram()
             Vec4i tmp = path[i];
             Point p = Point(tmp[0], tmp[1]);
 
-            stringstream ic;
-            ic << i;
+
+            //putText(source, pos_nums[i], p, FONT_HERSHEY_PLAIN, 1, Scalar(255, 255, 0));
 
             Point vertex1 = Point(p.x - tmp[2], p.y - tmp[3]);
             Point vertex2 = Point(p.x + tmp[2], p.y + tmp[3]);
@@ -222,8 +219,7 @@ int MainProgram()
             //circle(source, vertex1, 4, Scalar(0, 255, 0), -1, 8, 0);
             //circle(source, vertex2, 4, Scalar(0, 255, 0), -1, 8, 0);
             rectangle(source, vertex1, vertex2, colour, 1, 8, 0);
-            putText(source, ic.str(), p, FONT_HERSHEY_PLAIN, 0.8, colour, 2);
-            //circle(source, p, 4, colour, -1, 8, 0);
+            circle(source, p, 4, colour, -1, 8, 0);
         }
 
         //Get circles from processed image.
@@ -275,17 +271,17 @@ int MainProgram()
 
                 if (timeStuck/getTickFrequency() > 3)
                 {
-                    if (xAngle > BOARD_0_XANG)
-                        xAngle = xAngle - BOARD_0_XANG;
+                    if (xAngle == xControl.GetOutputMax())
+                        xAngle = BOARD_0_XANG;
 
                     else
-                        xAngle = xAngle + BOARD_0_XANG;
+                        xAngle = BOARD_0_XANG;
 
-                    if (yAngle > BOARD_0_YANG)
-                        yAngle = yAngle - BOARD_0_YANG;
+                    if (yAngle == yControl.GetOutputMax())
+                        yAngle = BOARD_0_YANG;
 
                     else
-                        yAngle = yAngle + BOARD_0_YANG;
+                        yAngle = BOARD_0_YANG;
 
                     timeStuck = 0;
                 }
@@ -349,12 +345,12 @@ int MainProgram()
         prevTime = currTime;
 
         //Stop process when esc is pressed.
-        if(waitKey(1) == 27)
+        if(waitKey(5) == 27)
         {
             cout << "ESC PRESSED" << endl;
             break;
         }
-        if (waitKey(1) == 32)
+        if (waitKey(5) == 32)
             currPosition = 0;
     }
 
