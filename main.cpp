@@ -13,6 +13,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <vector>
+#include <stdlib.h>
 
 #ifdef UNIX
 #include <unistd.h>
@@ -63,6 +64,8 @@ double getAverageFPS()
 
 int MainProgram()
 {
+    string pos_nums[] = {"1", "2", "3" "4", "5", "6", "7", "8", "9", "10"};
+
     bool ballOnBoard = false;
     int framesWithoutBall = 0;
     int upperThres = 10;
@@ -72,9 +75,9 @@ int MainProgram()
     int xAngle = BOARD_0_XANG, prevXAngle = xAngle;
     int yAngle = BOARD_0_YANG, prevYAngle = yAngle;
     //WITH CONTROLLER LIMIT 1000, X VALUEs
-    int xiNum = 27, xiDen = 3, xdNum = 77, xdDen = 15, xpNum = 38, xpDen = 45;
+    int xiNum = 27, xiDen = 3, xdNum = 81, xdDen = 10, xpNum = 59, xpDen = 45;
     //WITH CONTROLLER LIMIT 1000, Y VALUEs
-    int yiNum = 29, yiDen = 3, ydNum = 77, ydDen = 15, ypNum = 34, ypDen = 41;
+    int yiNum = 29, yiDen = 3, ydNum = 83, ydDen = 10, ypNum = 52, ypDen = 41;
 
 
     //WITH CONTROLLER LIMIT 100
@@ -104,7 +107,7 @@ int MainProgram()
     cvCreateTrackbar("xiDen","Trackbars",&xiDen,100);
     cvCreateTrackbar("xdNum","Trackbars",&xdNum,100);
     cvCreateTrackbar("xdDen","Trackbars",&xdDen,100);
-    cvCreateTrackbar("xpNum","Trackbars",&xpNum,1000);
+    cvCreateTrackbar("xpNum","Trackbars",&xpNum,100);
     cvCreateTrackbar("xpDen","Trackbars",&xpDen,100);
     cvCreateTrackbar("yiNum","Trackbars",&yiNum,100);
     cvCreateTrackbar("yiDen","Trackbars",&yiDen,100);
@@ -144,22 +147,23 @@ int MainProgram()
     // setup our desired path
     vector<Vec4i> path;
 
-    path.push_back(Vec4i(384, 372, 2*BALL_RAD, 2*BALL_RAD)); //Before gate 1
-    path.push_back(Vec4i(346, 364, BALL_RAD, BALL_RAD)); //Gate 1
-    path.push_back(Vec4i(298, 364, BALL_RAD, BALL_RAD)); //After gate 1
-    path.push_back(Vec4i(246, 372, 2*BALL_RAD, 2*BALL_RAD)); // Between gate 1 and 2
-    path.push_back(Vec4i(178, 386, BALL_RAD, BALL_RAD)); //Before gate 2
-    path.push_back(Vec4i(148, 386, BALL_RAD/2, BALL_RAD/2));  //Gate 2
-    path.push_back(Vec4i(116, 382, BALL_RAD, BALL_RAD)); //After gate 2
-    path.push_back(Vec4i(108, 317, BALL_RAD, BALL_RAD)); // After gate 2
-    path.push_back(Vec4i(130, 280, 3*BALL_RAD, 3*BALL_RAD)); //Midpoint 1
-    path.push_back(Vec4i(218, 220, 2*BALL_RAD, 2*BALL_RAD)); // Midpoint 2
-    path.push_back(Vec4i(300, 220, 3*BALL_RAD, 3*BALL_RAD));  //Midpoint 3
-    path.push_back(Vec4i(434, 172, 3*BALL_RAD, 3*BALL_RAD));  //Midpoint 4
-    path.push_back(Vec4i(376, 106, BALL_RAD, BALL_RAD));  //Before gate 3
-    path.push_back(Vec4i(348, 106, BALL_RAD/2, BALL_RAD/2));  //Gate 3
-    path.push_back(Vec4i(320, 106, BALL_RAD, BALL_RAD));  //After gate 3
-    path.push_back(Vec4i(172, 104, BALL_RAD/2, BALL_RAD/2));  //Hole
+    path.push_back(Vec4i(374, 372, 2.5*BALL_RAD, 2.5*BALL_RAD)); //Before gate 1
+    path.push_back(Vec4i(346, 372, BALL_RAD/2, 2*BALL_RAD)); //Gate 1
+    path.push_back(Vec4i(320, 372, 2.5*BALL_RAD, 2.5*BALL_RAD)); //After gate 1
+    path.push_back(Vec4i(260, 372, 2.5*BALL_RAD, 2.5*BALL_RAD)); // Between gate 1 and 2
+    path.push_back(Vec4i(178, 386, 2.5*BALL_RAD, 2.5*BALL_RAD)); //Before gate 2
+    path.push_back(Vec4i(148, 386, BALL_RAD/2, 2*BALL_RAD));  //Gate 2
+    path.push_back(Vec4i(116, 386, 2.5*BALL_RAD, 2.5*BALL_RAD)); //After gate 2
+    path.push_back(Vec4i(218, 300, 3.5*BALL_RAD, 3.5*BALL_RAD)); // Midpoint 1
+    path.push_back(Vec4i(250, 260, 3.5*BALL_RAD, 3.5*BALL_RAD));  //Midpoint 2
+    path.push_back(Vec4i(300, 220, 3.5*BALL_RAD, 3.5*BALL_RAD));  //Midpoint 3
+    path.push_back(Vec4i(350, 200, 3.5*BALL_RAD, 3.5*BALL_RAD));  //Midpoint 4
+    path.push_back(Vec4i(400, 172, 3.5*BALL_RAD, 3.5*BALL_RAD));  //Midpoint 5
+    path.push_back(Vec4i(376, 106, 2.5*BALL_RAD, 2.5*BALL_RAD));  //Before gate 3
+    path.push_back(Vec4i(358, 106, BALL_RAD/2, 2*BALL_RAD));  //Gate 3
+    path.push_back(Vec4i(348, 106, BALL_RAD/2, 2*BALL_RAD));  //Gate 3
+    path.push_back(Vec4i(320, 106, 2.5*BALL_RAD, 2.5*BALL_RAD));  //After gate 3
+    path.push_back(Vec4i(172, 108, BALL_RAD/2, BALL_RAD/2));  //Hole
     int currPosition = 0;
 
 
@@ -175,21 +179,6 @@ int MainProgram()
         beforeCapTime = (double)getTickCount();
 
         bool bSuccess = cap.read(source);
-
-        for (int i = 0; i < (int)path.size(); i++)
-        {
-            Vec4i tmp = path[i];
-            Point p = Point(tmp[0], tmp[1]);
-
-            circle(source, p, 4, Scalar(255, 255,0), -1, 8, 0);
-
-            Point vertex1 = Point(p.x - tmp[2], p.y - tmp[3]);
-            Point vertex2 = Point(p.x + tmp[2], p.y + tmp[3]);
-
-            //circle(source, vertex1, 4, Scalar(0, 255, 0), -1, 8, 0);
-            //circle(source, vertex2, 4, Scalar(0, 255, 0), -1, 8, 0);
-            rectangle(source, vertex1, vertex2, Scalar(255, 255, 0), 1, 8, 0);
-        }
 
         currTime = (double)getTickCount();
 
@@ -209,6 +198,30 @@ int MainProgram()
 
         processed = ImageProcessing(source, 35, 90, 0, 255, 70, 255, 9);
 
+        for (int i = 0; i < (int)path.size(); i++)
+        {
+            Vec4i tmp = path[i];
+            Point p = Point(tmp[0], tmp[1]);
+
+
+            //putText(source, pos_nums[i], p, FONT_HERSHEY_PLAIN, 1, Scalar(255, 255, 0));
+
+            Point vertex1 = Point(p.x - tmp[2], p.y - tmp[3]);
+            Point vertex2 = Point(p.x + tmp[2], p.y + tmp[3]);
+
+            Scalar colour;
+
+            if (currPosition > i)
+                colour = Scalar(0, 255, 255);
+            else
+                colour = Scalar(255, 255, 0);
+
+            //circle(source, vertex1, 4, Scalar(0, 255, 0), -1, 8, 0);
+            //circle(source, vertex2, 4, Scalar(0, 255, 0), -1, 8, 0);
+            rectangle(source, vertex1, vertex2, colour, 1, 8, 0);
+            circle(source, p, 4, colour, -1, 8, 0);
+        }
+
         //Get circles from processed image.
         HoughCircles(processed, circles, CV_HOUGH_GRADIENT, 1, processed.rows/8, 
                      upperThres, centerThres, minRad, maxRad);
@@ -219,6 +232,8 @@ int MainProgram()
 
         xControl.setDesiredPos_px(newXY.x);
         yControl.setDesiredPos_px(newXY.y);
+        xControl.setMinimumPositionError(newDesPos[2]);
+        yControl.setMinimumPositionError(newDesPos[3]);
 
         circle(source, newXY, 4, Scalar(255,0,0), -1, 8, 0);
 
@@ -254,19 +269,19 @@ int MainProgram()
             {
                 timeStuck += currTime - prevTime;
 
-                if (timeStuck/getTickFrequency() > 4)
+                if (timeStuck/getTickFrequency() > 3)
                 {
                     if (xAngle == xControl.GetOutputMax())
-                        xAngle = BOARD_0_XANG/4;
+                        xAngle = BOARD_0_XANG;
 
                     else
-                        xAngle = 1.25*BOARD_0_XANG;
+                        xAngle = BOARD_0_XANG;
 
                     if (yAngle == yControl.GetOutputMax())
-                        yAngle = BOARD_0_YANG/4;
+                        yAngle = BOARD_0_YANG;
 
                     else
-                        yAngle = 1.25*BOARD_0_YANG;
+                        yAngle = BOARD_0_YANG;
 
                     timeStuck = 0;
                 }
@@ -281,12 +296,10 @@ int MainProgram()
             {
                 timeAtPos += currTime - prevTime;
 
-                if (timeAtPos/getTickFrequency() > 0)
+                if (timeAtPos/getTickFrequency() > -1)
                 {
                     currPosition++;
 
-                    xControl.setMinimumPositionError(newDesPos[2]);
-                    yControl.setMinimumPositionError(newDesPos[3]);
 
                     if (currPosition >= (int)path.size())
                     {
@@ -332,11 +345,13 @@ int MainProgram()
         prevTime = currTime;
 
         //Stop process when esc is pressed.
-        if(waitKey(30) == 27)
+        if(waitKey(5) == 27)
         {
             cout << "ESC PRESSED" << endl;
             break;
         }
+        if (waitKey(5) == 32)
+            currPosition = 0;
     }
 
     return 0;
