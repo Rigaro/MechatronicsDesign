@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <vector>
 #include <stdlib.h>
+#include <sstream>
 
 #ifdef UNIX
 #include <unistd.h>
@@ -27,7 +28,7 @@
 #define BOARD_0_XANG 8
 #define BOARD_0_YANG 6
 
-#define CAM_INDEX 1
+#define CAM_INDEX 2
 
 #define FPS_MAX 24
 
@@ -148,20 +149,24 @@ int MainProgram()
     vector<Vec4i> path;
 
     path.push_back(Vec4i(400, 170, 5*BALL_RAD, 2*BALL_RAD));  //Before gate 1
-    path.push_back(Vec4i(370, 108, 2.3*BALL_RAD, 2*BALL_RAD));  //Before gate 1
-    path.push_back(Vec4i(345, 108, BALL_RAD/3, 1.8*BALL_RAD));  //Gate 1
-    path.push_back(Vec4i(323, 108, 2.3*BALL_RAD, 2*BALL_RAD));  //After gate 1
-    path.push_back(Vec4i(370, 368, 2.3*BALL_RAD, 2*BALL_RAD)); //Before gate 2
-    path.push_back(Vec4i(344, 368, BALL_RAD/3, 1.8*BALL_RAD)); //Gate 2
-    path.push_back(Vec4i(320, 368, 2.3*BALL_RAD, 2*BALL_RAD)); //After gate 2
-    path.push_back(Vec4i(260, 372, BALL_RAD, 4*BALL_RAD)); // Between gate 2 and 3
-    path.push_back(Vec4i(220, 386, BALL_RAD, 4*BALL_RAD)); // Between gate 2 and 3
-    path.push_back(Vec4i(176, 386, 2.3*BALL_RAD, 2*BALL_RAD)); //Before gate 3
-    path.push_back(Vec4i(152, 386, BALL_RAD/3, 1.8*BALL_RAD));  //Gate 3
-    path.push_back(Vec4i(128, 386, 2.3*BALL_RAD, 2*BALL_RAD)); //After gate 3
-    path.push_back(Vec4i(300, 270, 10*BALL_RAD, 5*BALL_RAD));  //Before hole
-    path.push_back(Vec4i(176, 112, BALL_RAD/2, BALL_RAD/2));  //Hole
-
+    path.push_back(Vec4i(370, 106, 1.5*BALL_RAD, 2*BALL_RAD));  //Before gate 1
+    path.push_back(Vec4i(342, 106, BALL_RAD/5, 2*BALL_RAD));  //Gate 1
+    path.push_back(Vec4i(318, 106, 1.5*BALL_RAD, 2*BALL_RAD));  //After gate 1
+    path.push_back(Vec4i(370, 372, 1.5*BALL_RAD, 2*BALL_RAD)); //Before gate 2
+    path.push_back(Vec4i(340, 372, BALL_RAD/5, 2*BALL_RAD)); //Gate 2
+    path.push_back(Vec4i(315, 372, 1.5*BALL_RAD, 2*BALL_RAD)); //After gate 2
+    //path.push_back(Vec4i(260, 372, 2.5*BALL_RAD, 2.5*BALL_RAD)); // Between gate 1 and 2
+    path.push_back(Vec4i(176, 386, 1.5*BALL_RAD, 2*BALL_RAD)); //Before gate 3
+    path.push_back(Vec4i(150, 386, BALL_RAD/5, 2*BALL_RAD));  //Gate 3
+    path.push_back(Vec4i(120, 386, 1.5*BALL_RAD, 2*BALL_RAD)); //After gate 3
+    //path.push_back(Vec4i(218, 300, 3.5*BALL_RAD, 3.5*BALL_RAD)); // Midpoint 1
+    //path.push_back(Vec4i(250, 260, 3.5*BALL_RAD, 3.5*BALL_RAD));  //Midpoint 2
+    //path.push_back(Vec4i(300, 220, 3.5*BALL_RAD, 3.5*BALL_RAD));  //Midpoint 3
+    //path.push_back(Vec4i(300, 200, 3.5*BALL_RAD, 3.5*BALL_RAD));  //Midpoint 4
+    //path.push_back(Vec4i(300, 172, 3.5*BALL_RAD, 3.5*BALL_RAD));  //Midpoint 5
+    //path.push_back(Vec4i(300, 132, 2*BALL_RAD, 2*BALL_RAD));  //Midpoint 6
+    //path.push_back(Vec4i(300, 172, 2*BALL_RAD, 2*BALL_RAD));  //Midpoint 7
+    path.push_back(Vec4i(172, 108, BALL_RAD/2, BALL_RAD/2));  //Hole
     int currPosition = 0;
 
 
@@ -201,8 +206,8 @@ int MainProgram()
             Vec4i tmp = path[i];
             Point p = Point(tmp[0], tmp[1]);
 
-
-            //putText(source, pos_nums[i], p, FONT_HERSHEY_PLAIN, 1, Scalar(255, 255, 0));
+            stringstream ic;
+            ic << i;
 
             Point vertex1 = Point(p.x - tmp[2], p.y - tmp[3]);
             Point vertex2 = Point(p.x + tmp[2], p.y + tmp[3]);
@@ -217,7 +222,8 @@ int MainProgram()
             //circle(source, vertex1, 4, Scalar(0, 255, 0), -1, 8, 0);
             //circle(source, vertex2, 4, Scalar(0, 255, 0), -1, 8, 0);
             rectangle(source, vertex1, vertex2, colour, 1, 8, 0);
-            circle(source, p, 4, colour, -1, 8, 0);
+            putText(source, ic.str(), p, FONT_HERSHEY_PLAIN, 0.8, colour, 2);
+            //circle(source, p, 4, colour, -1, 8, 0);
         }
 
         //Get circles from processed image.
@@ -271,17 +277,17 @@ int MainProgram()
 
                 if (timeStuck/getTickFrequency() > 3)
                 {
-                    if (xAngle == xControl.GetOutputMax())
-                        xAngle = BOARD_0_XANG;
+                    if (xAngle > BOARD_0_XANG)
+                        xAngle = xAngle - BOARD_0_XANG;
 
                     else
-                        xAngle = BOARD_0_XANG;
+                        xAngle = xAngle + BOARD_0_XANG;
 
-                    if (yAngle == yControl.GetOutputMax())
-                        yAngle = BOARD_0_YANG;
+                    if (yAngle > BOARD_0_YANG)
+                        yAngle = yAngle - BOARD_0_YANG;
 
                     else
-                        yAngle = BOARD_0_YANG;
+                        yAngle = yAngle + BOARD_0_YANG;
 
                     timeStuck = 0;
                 }
@@ -289,6 +295,7 @@ int MainProgram()
             }
             else
                 timeStuck = 0;
+
 
             // If we're at the desired position, increment the path counter so we try
             // to go to the next point starting with the next frame
@@ -345,12 +352,12 @@ int MainProgram()
         prevTime = currTime;
 
         //Stop process when esc is pressed.
-        if(waitKey(5) == 27)
+        if(waitKey(1) == 27)
         {
             cout << "ESC PRESSED" << endl;
             break;
         }
-        if (waitKey(5) == 32)
+        if (waitKey(1) == 32)
             currPosition = 0;
     }
 
@@ -366,7 +373,7 @@ int SerialTest()
 
     Mat src;
 
-    VideoCapture cap(1);
+    VideoCapture cap(2);
 
     if(!cap.isOpened())
     {

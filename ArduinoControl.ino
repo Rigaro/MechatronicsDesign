@@ -3,9 +3,9 @@
 #define xMin 42
 #define xZero 50
 #define xMax 58
-#define yMin 101
-#define yZero 107
-#define yMax 113
+#define yMin 98
+#define yZero 104
+#define yMax 110
 
 Servo xServo, yServo;
 int tempAngle = 0, xAngle = xZero, yAngle = yZero;
