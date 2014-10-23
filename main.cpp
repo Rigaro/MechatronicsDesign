@@ -27,7 +27,7 @@
 #define BOARD_0_XANG 8
 #define BOARD_0_YANG 6
 
-#define CAM_INDEX 1
+#define CAM_INDEX 2
 
 #define FPS_MAX 24
 
